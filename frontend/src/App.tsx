@@ -9,6 +9,7 @@ import Landing from './pages/Landing'
 import { LeagueForm, Leagues, Lobby } from './pages/Leagues'
 import { Draft, Recap } from './pages/Draft'
 import Fpl from './pages/Fpl'
+import { FPL_ENABLED } from './features'
 import Settings from './pages/Settings'
 const Admin = lazy(() => import('./pages/Admin'))
 import type { League } from './state/types'
@@ -23,7 +24,12 @@ function LeaguePage({ league, path }: { league: League; path: string }) {
   return <Draft league={league} />
 }
 export default function App() {
-  const path = useRoute()
+  const requestedPath = useRoute()
+  const hiddenFpl = !FPL_ENABLED && (requestedPath === '/fpl' || requestedPath.startsWith('/fpl/'))
+  const path = hiddenFpl ? '/nba' : requestedPath
+  useEffect(() => {
+    if (hiddenFpl) navigate('/nba')
+  }, [hiddenFpl])
   const { profile, leagues } = useStore()
   useEffect(() => {
     document.documentElement.dataset.reducedMotion = String(profile.reducedMotion)
@@ -46,7 +52,7 @@ export default function App() {
   else if (path === '/home' || path === '/nba') page = <Leagues home={path === '/home'} />
   else if (path === '/nba/create' || path === '/nba/join')
     page = <LeagueForm key={path} join={path.endsWith('join')} />
-  else if (path === '/fpl') page = <Fpl />
+  else if (FPL_ENABLED && path === '/fpl') page = <Fpl />
   else if (path === '/settings') page = <Settings />
   else if (path === '/admin')
     page = (

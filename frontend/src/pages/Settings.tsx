@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Check, RefreshCcw, Trash2 } from 'lucide-react'
 import { actions, useStore } from '../state/store'
 import { Modal, PageTitle } from '../components/ui'
+import { FPL_ENABLED } from '../features'
 
 export default function Settings() {
   const { profile, leagues } = useStore()
@@ -83,8 +84,9 @@ export default function Settings() {
           </p>
           <p>
             Opponents are simulated. Invite codes work locally. Player rankings, team labels, and
-            2024/25 stats are sample data. FPL suggestions use an illustrative heuristic, not live
-            ML predictions.
+            2024/25 stats are sample data.
+            {FPL_ENABLED &&
+              ' FPL suggestions use an illustrative heuristic, not live ML predictions.'}
           </p>
           <p>Real accounts, multiplayer, and live data will connect to FastAPI later.</p>
           <div className="action-row">
@@ -104,7 +106,8 @@ export default function Settings() {
         <Modal title="Clear your local leagues?" onClose={() => setReset(false)}>
           <p>
             This removes all {leagues.length} leagues, their draft picks, and queues from this
-            browser. Your profile and FPL setup will stay.
+            browser.{' '}
+            {FPL_ENABLED ? 'Your profile and FPL setup will stay.' : 'Your profile will stay.'}
           </p>
           <div className="action-row">
             <button className="secondary-button" onClick={() => setReset(false)}>

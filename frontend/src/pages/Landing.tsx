@@ -15,6 +15,7 @@ import { Brand, PlayerPhoto } from '../components/ui'
 import { PlayerCarousel } from '../components/PlayerCarousel'
 import { navigate } from '../state/router'
 import { playerById } from '../state/data'
+import { FPL_ENABLED } from '../features'
 
 const faqs = [
   [
@@ -25,13 +26,17 @@ const faqs = [
     'Can I play with just my friends?',
     'That’s the plan: private, invite-only leagues for your inner circle. This frontend demo stores leagues in your browser and uses clearly labeled local guest teams. Remote invitations and multiplayer will need the backend.',
   ],
-  [
-    'Does the FPL Assistant change my official team?',
-    'No. Compare options here, then make your actual transfer in the official FPL game. Predictions and fixtures in this demo are illustrative examples, not a live ML model.',
-  ],
+  ...(FPL_ENABLED
+    ? [
+        [
+          'Does the FPL Assistant change my official team?',
+          'No. Compare options here, then make your actual transfer in the official FPL game. Predictions and fixtures in this demo are illustrative examples, not a live ML model.',
+        ],
+      ]
+    : []),
   [
     'Do I need to be a fantasy expert?',
-    'No. Player statistics, a clear draft clock, and a personal queue help you make each pick. Transfer comparisons explain the costs and tradeoffs in plain language.',
+    'No. Player statistics, a clear draft clock, and a personal queue help you make each pick.',
   ],
 ]
 export default function Landing() {
@@ -68,7 +73,7 @@ export default function Landing() {
           <Brand landing />
           <nav aria-label="Explore Sports Fanatics" className={menu ? 'is-open' : ''}>
             <button onClick={() => scroll('nba-experience')}>NBA Fantasy</button>
-            <button onClick={() => scroll('fpl-experience')}>FPL Assistant</button>
+            {FPL_ENABLED && <button onClick={() => scroll('fpl-experience')}>FPL Assistant</button>}
             <button onClick={() => scroll('how-it-works')}>How it works</button>
           </nav>
           <button className="landing-open-app" onClick={() => go('/home')}>
@@ -104,7 +109,8 @@ export default function Landing() {
                 Give it a league to settle them.
               </p>
               <p className="hero-description">
-                Draft your NBA dream team with friends. Make your next FPL move with confidence.
+                Draft your NBA dream team with friends.
+                {FPL_ENABLED && ' Make your next FPL move with confidence.'}
                 This is your home advantage.
               </p>
               <div className="hero-actions">
@@ -315,65 +321,67 @@ export default function Landing() {
               <ArrowRight />
             </button>
           </section>
-          <section className="landing-section fpl-story" id="fpl-experience">
-            <div className="landing-fpl-preview">
-              <div className="fpl-preview-header">
-                <span>THE TRANSFER DESK</span>
-                <span>4 GAMEWEEKS</span>
-              </div>
-              <div className="fpl-preview-headline">
-                <span className="eyebrow">THINK BEYOND THE NEXT FIXTURE</span>
-                <h3>A LITTLE LESS GUESSWORK.</h3>
-              </div>
-              <div className="fpl-versus">
-                <div>
-                  <span>KEEP</span>
-                  <h4>Eze</h4>
-                  <b>
-                    16.4<span> pts</span>
-                  </b>
+          {FPL_ENABLED && (
+            <section className="landing-section fpl-story" id="fpl-experience">
+              <div className="landing-fpl-preview">
+                <div className="fpl-preview-header">
+                  <span>THE TRANSFER DESK</span>
+                  <span>4 GAMEWEEKS</span>
                 </div>
-                <span className="versus-label">OR</span>
-                <div className="fpl-replacement">
-                  <span>TRANSFER IN</span>
-                  <h4>Mbeumo</h4>
-                  <b>
-                    21.6<span> pts</span>
-                  </b>
+                <div className="fpl-preview-headline">
+                  <span className="eyebrow">THINK BEYOND THE NEXT FIXTURE</span>
+                  <h3>A LITTLE LESS GUESSWORK.</h3>
                 </div>
-              </div>
-              <div className="fpl-preview-verdict">
-                <Check />
-                <p>
-                  <b>Look at the whole picture.</b>
-                  <span>Compare expected points, fixtures, cost, and risk.</span>
+                <div className="fpl-versus">
+                  <div>
+                    <span>KEEP</span>
+                    <h4>Eze</h4>
+                    <b>
+                      16.4<span> pts</span>
+                    </b>
+                  </div>
+                  <span className="versus-label">OR</span>
+                  <div className="fpl-replacement">
+                    <span>TRANSFER IN</span>
+                    <h4>Mbeumo</h4>
+                    <b>
+                      21.6<span> pts</span>
+                    </b>
+                  </div>
+                </div>
+                <div className="fpl-preview-verdict">
+                  <Check />
+                  <p>
+                    <b>Look at the whole picture.</b>
+                    <span>Compare expected points, fixtures, cost, and risk.</span>
+                  </p>
+                </div>
+                <p className="fpl-preview-disclaimer">
+                  Illustrative predictions · outcomes aren’t guaranteed
                 </p>
               </div>
-              <p className="fpl-preview-disclaimer">
-                Illustrative predictions · outcomes aren’t guaranteed
-              </p>
-            </div>
-            <div className="section-intro">
-              <span className="sport-section-label green">FPL ASSISTANT</span>
-              <h2>
-                TRUST YOUR GUT.
-                <br />
-                <span className="green">CHECK THE NUMBERS.</span>
-              </h2>
-              <p>
-                A companion for the FPL game you already play. Compare a transfer with keeping your
-                squad, see the cost of a points hit, and plan a few gameweeks ahead.
-              </p>
-              <p className="fpl-keep-line">Sometimes the smartest move is no move at all.</p>
-              <button className="landing-outline-link green-link" onClick={() => go('/fpl')}>
-                Meet your FPL assistant
-                <ArrowRight />
-              </button>
-              <span className="fpl-independent">
-                Independent planning tool. Your official FPL squad stays in your hands.
-              </span>
-            </div>
-          </section>
+              <div className="section-intro">
+                <span className="sport-section-label green">FPL ASSISTANT</span>
+                <h2>
+                  TRUST YOUR GUT.
+                  <br />
+                  <span className="green">CHECK THE NUMBERS.</span>
+                </h2>
+                <p>
+                  A companion for the FPL game you already play. Compare a transfer with keeping
+                  your squad, see the cost of a points hit, and plan a few gameweeks ahead.
+                </p>
+                <p className="fpl-keep-line">Sometimes the smartest move is no move at all.</p>
+                <button className="landing-outline-link green-link" onClick={() => go('/fpl')}>
+                  Meet your FPL assistant
+                  <ArrowRight />
+                </button>
+                <span className="fpl-independent">
+                  Independent planning tool. Your official FPL squad stays in your hands.
+                </span>
+              </div>
+            </section>
+          )}
           <section className="landing-section faq-section">
             <div>
               <span className="eyebrow">BEFORE TIP-OFF</span>
@@ -439,13 +447,16 @@ export default function Landing() {
             </p>
             <nav aria-label="Footer navigation">
               <button onClick={() => go('/nba')}>NBA Fantasy</button>
-              <button onClick={() => go('/fpl')}>FPL Assistant</button>
+              {FPL_ENABLED && <button onClick={() => go('/fpl')}>FPL Assistant</button>}
               <button onClick={() => go('/home')}>Your home court</button>
             </nav>
           </div>
           <div className="landing-footer-bottom">
             <span>© Sports Fanatics · Interactive prototype</span>
-            <span>Independent fan platform. Not affiliated with the NBA or Premier League.</span>
+            <span>
+              Independent fan platform. Not affiliated with{' '}
+              {FPL_ENABLED ? 'the NBA or Premier League' : 'the NBA'}.
+            </span>
           </div>
         </footer>
       </div>

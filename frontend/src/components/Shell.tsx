@@ -5,17 +5,18 @@ import { Brand, Avatar } from './ui'
 import { navigate } from '../state/router'
 import { getStorageWarning, useStore } from '../state/store'
 import { leaguePath } from '../state/engine'
+import { FPL_ENABLED } from '../features'
 
 export function Shell({ path, children }: { path: string; children: ReactNode }) {
   const state = useStore()
   const [open, setOpen] = useState(false)
-  const fpl = path.startsWith('/fpl')
+  const fpl = FPL_ENABLED && path.startsWith('/fpl')
   const leagueId = path.match(/^\/nba\/leagues\/([^/]+)/)?.[1]
   const league = state.leagues.find((l) => l.id === leagueId)
   const nav = [
     { name: 'Home', to: '/home', icon: House },
     { name: 'NBA Fantasy', to: '/nba', icon: Volleyball },
-    { name: 'FPL Assistant', to: '/fpl', icon: Volleyball },
+    ...(FPL_ENABLED ? [{ name: 'FPL Assistant', to: '/fpl', icon: Volleyball }] : []),
     { name: 'Profile & settings', to: '/settings', icon: Settings },
     { name: 'NBA administration', to: '/admin', icon: Settings },
   ]
@@ -79,9 +80,11 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
             <button className={!fpl ? 'active' : ''} onClick={() => go('/nba')}>
               NBA Fantasy
             </button>
-            <button className={fpl ? 'active fpl-active' : ''} onClick={() => go('/fpl')}>
-              FPL Assistant
-            </button>
+            {FPL_ENABLED && (
+              <button className={fpl ? 'active fpl-active' : ''} onClick={() => go('/fpl')}>
+                FPL Assistant
+              </button>
+            )}
           </div>
           {league && (
             <label className="league-switch-label">

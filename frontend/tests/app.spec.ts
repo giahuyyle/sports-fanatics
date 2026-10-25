@@ -93,24 +93,26 @@ test('timeout uses queue, offline pause preserves state, search can be cleared',
   await page.getByRole('button', { name: 'Resume local draft' }).click()
   await expect(page.getByRole('button', { name: 'Draft Shai', exact: true })).toBeEnabled()
 })
-test('FPL penalties, affordability, saving, and squad validation', async ({ page }) => {
-  await page.goto('/#/fpl')
-  await expect(page.getByRole('heading', { name: 'Bring in Mbeumo.' })).toBeVisible()
-  await page
-    .getByRole('combobox', { name: 'Other planned transfers', exact: true })
-    .selectOption('2')
-  await expect(page.getByRole('heading', { name: 'Save your transfer.' })).toBeVisible()
-  await page.getByLabel('Selling price (£m)').fill('1')
-  await expect(page.getByRole('heading', { name: 'This move needs more budget.' })).toBeVisible()
-  await page.getByRole('button', { name: 'Save keep-squad plan' }).click()
-  await expect(page.getByRole('button', { name: 'Plan saved in this browser' })).toBeVisible()
-  await page.getByRole('button', { name: 'Edit squad', exact: true }).click()
-  await page.getByLabel('GK player 1', { exact: true }).fill('')
-  await page.getByRole('button', { name: 'Save squad', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('every squad player a name')
-  await page.getByLabel('GK player 1', { exact: true }).fill('My Keeper')
-  await page.getByRole('button', { name: 'Save squad', exact: true }).click()
-  await expect(page.getByRole('dialog')).not.toBeVisible()
+test('NBA focus hides FPL entry points and preserves saved data on old links', async ({ page }) => {
+  const state = initialState()
+  state.savedPlan = { setup: structuredClone(state.fpl), savedAt: new Date().toISOString() }
+  await page.addInitScript(({ key, state }) => localStorage.setItem(key, JSON.stringify(state)), {
+    key,
+    state,
+  })
+  for (const path of ['/', '/home', '/nba', '/settings']) {
+    await page.goto(`/#${path}`)
+    await expect(page.locator('h1')).toBeVisible()
+    await expect(page.locator('body')).not.toContainText(/FPL|Premier League|Transfer comparisons/)
+  }
+  for (const path of ['/fpl', '/fpl/squad']) {
+    await page.goto(`/#${path}`)
+    await expect(page).toHaveURL(/#\/nba$/)
+    await expect(page.getByRole('heading', { name: 'Your leagues, your rivals.' })).toBeVisible()
+  }
+  const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), key)
+  expect(saved.fpl).toEqual(state.fpl)
+  expect(saved.savedPlan).toEqual(state.savedPlan)
 })
 test('settings save, confirmed reset, and empty home', async ({ page }) => {
   await page.goto('/#/settings')
@@ -144,7 +146,7 @@ test('screens fit desktop and narrow mobile widths', async ({ page }) => {
       '/nba/create',
       '/nba/leagues/office/lobby',
       '/nba/leagues/sunday/draft',
-      '/fpl',
+      '/nba',
       '/settings',
     ]) {
       await page.goto(`/#${path}`)
@@ -155,12 +157,9 @@ test('screens fit desktop and narrow mobile widths', async ({ page }) => {
         () => document.documentElement.scrollWidth - window.innerWidth,
       )
       expect(overflow, `${path} at ${width}px`).toBeLessThanOrEqual(1)
-      if (
-        [1440, 375].includes(width) &&
-        ['/', '/nba/leagues/sunday/draft', '/fpl'].includes(path)
-      ) {
+      if ([1440, 375].includes(width) && ['/', '/nba/leagues/sunday/draft'].includes(path)) {
         await page.screenshot({
-          path: `/private/tmp/sports-fanatics-qa/${width}-${path === '/' ? 'landing' : path === '/fpl' ? 'fpl' : 'draft'}.png`,
+          path: `/private/tmp/sports-fanatics-qa/${width}-${path === '/' ? 'landing' : 'draft'}.png`,
           fullPage: true,
         })
       }
@@ -224,6 +223,7 @@ test('mobile menu and focused draft views remain usable', async ({ page }) => {
   await page.goto('/#/nba/leagues/sunday/draft')
   await page.getByRole('button', { name: 'Open navigation' }).click()
   await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'FPL Assistant' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Close navigation' }).click()
   await page.getByRole('tab', { name: 'Board', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Draft board', exact: true })).toBeVisible()

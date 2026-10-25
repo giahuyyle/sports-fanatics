@@ -1,6 +1,6 @@
 # Sports Fanatics
 
-NBA fantasy drafts with friends and an FPL decision assistant.
+NBA fantasy draft leagues with friends.
 
 ## Stack
 
@@ -9,7 +9,9 @@ NBA fantasy drafts with friends and an FPL decision assistant.
 
 The frontend implements the supplied Sports Fanatics design as a local interactive
 prototype: public landing, NBA leagues, create/join forms, lobbies, a snake draft
-room, draft recaps, an illustrative FPL planner, and profile/settings.
+room, draft recaps, and profile/settings. The FPL prototype is hidden behind
+`FPL_ENABLED` in `frontend/src/features.ts`; its code and saved state are retained
+for a later release. Old FPL routes redirect to NBA leagues.
 
 League state, queues, picks, preferences, squad edits, and saved plans persist in
 browser storage when available. The default sample data includes a live Sunday
@@ -21,8 +23,8 @@ page is closed, the tab is hidden, or the demo is offline.
 opponents and sample statistics. The NBA backend now implements Firebase identity,
 PostgreSQL persistence, private leagues, atomic snake drafts, authoritative timeout
 workers, event replay, and lineup validation. `/#/admin` connects to protected
-player/import/pool APIs; gameplay UI integration is the next milestone. FPL remains
-illustrative.
+player/import/pool APIs; gameplay UI integration is the next milestone.
+FPL remains hidden.
 
 Backend setup and deployment: [operations guide](docs/backend/README.md).
 API contracts: [integration guide](docs/backend/INTEGRATION.md).
@@ -79,7 +81,7 @@ npm run dev
 ```
 
 Open http://localhost:5173. The frontend demo runs independently of the backend.
-Hash routes support refresh and deep links, including `/#/nba`, `/#/fpl`, and
+Hash routes support refresh and deep links, including `/#/nba` and
 `/#/nba/leagues/sunday/draft`. Vite proxies `/api` requests to the backend during
 development; the API client helper is retained for future integration.
 
@@ -116,7 +118,8 @@ Browser checks use the installed Google Chrome via Playwright (`channel: chrome`
 Install Chrome if necessary, or change the channel in `frontend/playwright.config.ts`
 to use a locally installed Playwright browser. Browser tests cover league setup,
 join errors and creator restrictions, snake turns, queues, automatic picks,
-connection simulation, persistence, FPL comparisons, settings, deep links, and
+connection simulation, persistence, hidden FPL entry points and redirects,
+settings, deep links, and
 320/375/768/1440px layouts. Screenshots are written to
 `/private/tmp/sports-fanatics-qa/` and are not committed.
 

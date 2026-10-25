@@ -6,6 +6,7 @@ import { leaguePath } from '../state/engine'
 import { navigate } from '../state/router'
 import { Avatar, EmptyState, Modal, PageTitle, RouteButton } from '../components/ui'
 import type { League } from '../state/types'
+import { FPL_ENABLED } from '../features'
 
 export function Leagues({ home = false }: { home?: boolean }) {
   const { leagues, profile } = useStore()
@@ -58,7 +59,7 @@ export function Leagues({ home = false }: { home?: boolean }) {
           </button>
         </EmptyState>
       )}
-      {home && (
+      {home && FPL_ENABLED && (
         <section className="home-fpl">
           <div>
             <span className="eyebrow green">ALSO IN YOUR PLAYBOOK</span>

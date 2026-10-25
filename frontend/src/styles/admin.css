@@ -121,3 +121,32 @@
   min-width: 0;
   max-width: 100%;
 }
+.admin-page .admin-form-fields {
+  border: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.admin-page textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--base);
+  color: var(--text);
+  font: inherit;
+}
+.selectable-id {
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: all;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.admin-records li {
+  display: block;
+}
+.admin-records li > button {
+  margin-left: 12px;
+}

@@ -4,7 +4,9 @@ import { autoPick, commitPick, compareTransfer, snakeIndex, validateSquad } from
 
 describe('snake draft', () => {
   it('reverses every round, including consecutive endpoint picks', () => {
-    expect(Array.from({ length: 12 }, (_, i) => snakeIndex(i, 4))).toEqual([0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3])
+    expect(Array.from({ length: 12 }, (_, i) => snakeIndex(i, 4))).toEqual([
+      0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3,
+    ])
   })
   it('rejects duplicate, unknown, and stale picks', () => {
     const league = initialState().leagues[0]
@@ -22,7 +24,11 @@ describe('snake draft', () => {
   })
   it('uses first available queued player at timeout', () => {
     const league = { ...initialState().leagues[0], queue: [203999, 201939, 1628983] }
-    expect(autoPick(league).picks.at(-1)).toEqual({ playerId: 201939, participantId: 'you', automatic: true })
+    expect(autoPick(league).picks.at(-1)).toEqual({
+      playerId: 201939,
+      participantId: 'you',
+      automatic: true,
+    })
   })
   it('blocks manual picks on another manager’s turn', () => {
     const league = commitPick(commitPick(initialState().leagues[0], 1628983), 201939)
@@ -30,11 +36,22 @@ describe('snake draft', () => {
   })
   it('completes six-team draft with full unique rosters', () => {
     let league = initialState().leagues[0]
-    league = { ...league, capacity: 6, rosterSize: 5, picks: [], participants: [...league.participants, { id: 'a', name: 'A', team: 'A', guest: true }, { id: 'b', name: 'B', team: 'B', guest: true }] }
+    league = {
+      ...league,
+      capacity: 6,
+      rosterSize: 5,
+      picks: [],
+      participants: [
+        ...league.participants,
+        { id: 'a', name: 'A', team: 'A', guest: true },
+        { id: 'b', name: 'B', team: 'B', guest: true },
+      ],
+    }
     for (let i = 0; i < 30; i++) league = autoPick(league)
     expect(league.status).toBe('complete')
     expect(new Set(league.picks.map((p) => p.playerId)).size).toBe(30)
-    for (const person of league.participants) expect(league.picks.filter((p) => p.participantId === person.id)).toHaveLength(5)
+    for (const person of league.participants)
+      expect(league.picks.filter((p) => p.participantId === person.id)).toHaveLength(5)
     expect(autoPick(league)).toBe(league)
   })
 })

@@ -11,13 +11,365 @@ export default function Fpl() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const result = compareTransfer(fpl)
-  const { outgoing, candidate, penalty, keep, gross, net, gain, affordable, inSquad, recommend, valid } = result
-  const setNumber = (field: 'selling' | 'bank', value: string) => actions.setFpl({ [field]: value === '' ? 0 : Number(value) })
-  const reason = !valid ? 'Enter a selling price from £0–20m and a bank balance from £0–100m.' : !affordable ? `You need £${Math.max(0, candidate.price - fpl.selling - fpl.bank).toFixed(1)}m more to afford ${candidate.short}.` : inSquad ? `${candidate.short} is already in your squad. Choose a different replacement.` : recommend ? `${candidate.short} projects ${gain.toFixed(1)} more points after the transfer cost, with ${candidate.risk.toLowerCase()} playing-time risk.` : 'The projected improvement does not justify this move under the sample rule. Keeping your squad is a valid choice.'
-  return <><div className="breadcrumb"><span>FPL Assistant</span><span>/</span><b>Transfer planner</b></div><PageTitle green kicker="A LITTLE DATA. A BETTER GAME PLAN." title="Make the right move" description="Compare your options. Keep your edge."><span className="illustrative-label">Illustrative predictions</span></PageTitle><div className="fpl-context"><span className="fpl-mark"><ShieldCheck/></span><span className="od-field"><strong>Your FPL game plan</strong><small>Sample 2024/25 squad · independent FPL companion</small></span><button className="secondary-button" onClick={() => setEditing(true)}><Pencil size={16}/>Edit squad</button></div><div className="fpl-grid"><section className="panel fpl-controls"><span className="eyebrow green">01 / SET THE SCENE</span><h2>Your transfer setup</h2><label className="field-label">Player to transfer out<select value={fpl.outgoingId} onChange={(e) => actions.setFpl({ outgoingId: e.target.value })}>{fpl.squad.filter((p) => p.position === 'MID').map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label><label className="field-label">Selling price (£m)<input type="number" min="0" max="20" step="0.1" value={fpl.selling} onChange={(e) => setNumber('selling', e.target.value)}/></label><div className="two-col"><label className="field-label">In the bank (£m)<input type="number" min="0" max="100" step="0.1" value={fpl.bank} onChange={(e) => setNumber('bank', e.target.value)}/></label><label className="field-label">Free transfers<select value={fpl.free} onChange={(e) => actions.setFpl({ free: Number(e.target.value) })}>{[0, 1, 2, 3, 4, 5].map((n) => <option key={n}>{n}</option>)}</select></label></div><fieldset className="horizon-field"><legend className="field-label">Planning horizon</legend><div className="segmented horizon">{[1, 2, 4, 6].map((n) => <button key={n} className={fpl.horizon === n ? 'active' : ''} aria-pressed={fpl.horizon === n} onClick={() => actions.setFpl({ horizon: n })}>{n} GW</button>)}</div></fieldset><label className="field-label">Other planned transfers<select value={fpl.other} onChange={(e) => actions.setFpl({ other: Number(e.target.value) })}>{[0, 1, 2, 3].map((n) => <option key={n}>{n}</option>)}</select></label><div className="settings-line"><span>Points penalty</span><strong className={penalty ? 'orange' : 'green'}>{penalty ? `−${penalty} points` : 'No points hit'}</strong></div><div className="mini-pitch" aria-label="Sample squad preview"><div className="pitch-center"/>{(['GK', 'DEF', 'MID', 'FWD'] as const).map((position) => <div className="pitch-line" key={position}>{fpl.squad.filter((p) => p.position === position).slice(0, position === 'GK' ? 1 : position === 'DEF' ? 3 : position === 'MID' ? 4 : 3).map((p) => <span className="pitch-player" key={p.id}><Shirt size={20}/><span>{p.name}</span></span>)}</div>)}</div><p className="draft-help">Edit your 15-player squad. This sample comparison covers midfield transfers only. Renaming a player does not update their sample prediction.</p></section><div className="fpl-main"><section className="panel"><div className="section-bar"><div className="od-field"><span className="eyebrow green">02 / WEIGH YOUR OPTIONS</span><h2>One spot. A few possibilities.</h2></div><span className="count-tag">{fpl.horizon} gameweeks</span></div><div className="fpl-comparison"><div className="fpl-table-head"><span>REPLACEMENT</span><span>PRICE</span><span>PREDICTED PTS</span><span>MINUTES RISK</span></div>{candidates.map((p) => <button className={`fpl-player-row ${fpl.candidateId === p.id ? 'selected' : ''}`} key={p.id} aria-pressed={fpl.candidateId === p.id} onClick={() => actions.setFpl({ candidateId: p.id })}><span className="od-row"><span className={`radio-dot ${fpl.candidateId === p.id ? 'on' : ''}`}/><span className="shirt-disc"><Shirt/></span><span className="od-field"><strong>{p.name}</strong><small>{p.team} · MID{fpl.squad.some((s) => s.id === p.id) ? ' · In squad' : ''}</small></span></span><span>£{p.price.toFixed(1)}m</span><strong>{(p.points * fpl.horizon).toFixed(1)}</strong><span className={`risk ${p.risk.toLowerCase()}`}>{p.risk}</span></button>)}</div><div className="fixture-line"><span className="eyebrow">{candidate.short}’S SAMPLE FIXTURES</span><div className="od-cluster">{candidate.fixtures.slice(0, fpl.horizon).map((fixture, i) => <span className={`fixture ${i % 3 === 0 ? 'easy' : ''}`} key={fixture}>{fixture}</span>)}</div></div></section><section className="fpl-verdict" aria-live="polite"><span className="eyebrow green">03 / THE BIG PICTURE</span><div className="verdict-title"><div><h2>{!affordable || !valid ? 'This move needs more budget.' : inSquad || !recommend ? 'Save your transfer.' : `Bring in ${candidate.short}.`}</h2><p>{reason}</p></div><span className="verdict-mark">{recommend ? <Check/> : <ShieldCheck/>}</span></div><div className="points-comparison"><div className="od-stat"><span>KEEP {outgoing.name.toUpperCase()}</span><strong>{keep.toFixed(1)}<small> pts</small></strong><div className="comparison-bar"><span style={{ transform: `scaleX(${keep / Math.max(keep, gross, 1)})` }}/></div></div><div className="od-stat"><span>TRANSFER IN {candidate.short.toUpperCase()}</span><strong>{net.toFixed(1)}<small> pts</small></strong><div className="comparison-bar green-bar"><span style={{ transform: `scaleX(${Math.max(0, net) / Math.max(keep, gross, 1)})` }}/></div><small>{gross.toFixed(1)} before penalty</small></div><div className="od-stat net-points"><span>NET CHANGE</span><strong className={gain > 0 ? 'green' : 'orange'}>{gain > 0 ? '+' : ''}{gain.toFixed(1)}</strong><small>{penalty ? `Includes −${penalty} points` : 'No points hit'}</small></div></div><div className="uncertainty-note"><Info/><p>Sample heuristic, not an ML service. Illustrative transfer range: {Math.max(0, Math.round(gross * 0.75))}–{Math.round(gross * 1.25)} points before penalties. This range is not calibrated confidence. Rotation, injuries, and match events can change the outcome.</p></div><button className="fpl-primary full" disabled={saving || !valid} onClick={async () => { setSaving(true); await new Promise((r) => setTimeout(r, 250)); actions.savePlan(); setSaving(false) }}>{saving ? 'Saving your plan…' : savedPlan ? 'Plan saved in this browser' : recommend ? 'Save transfer plan' : 'Save keep-squad plan'}{savedPlan ? <Check/> : <ArrowRight/>}</button>{savedPlan && <p className="saved-plan" role="status">Saved locally · {new Date(savedPlan.savedAt).toLocaleDateString()}. Your comparison will be here when you return.</p>}<p className="draft-help">Planning only. No changes are made to your official FPL team. Sample prices, fixtures, and affiliations are not current data.</p></section></div></div>{editing && <SquadEditor squad={fpl.squad} onClose={() => setEditing(false)}/>}</>
+  const {
+    outgoing,
+    candidate,
+    penalty,
+    keep,
+    gross,
+    net,
+    gain,
+    affordable,
+    inSquad,
+    recommend,
+    valid,
+  } = result
+  const setNumber = (field: 'selling' | 'bank', value: string) =>
+    actions.setFpl({ [field]: value === '' ? 0 : Number(value) })
+  const reason = !valid
+    ? 'Enter a selling price from £0–20m and a bank balance from £0–100m.'
+    : !affordable
+      ? `You need £${Math.max(0, candidate.price - fpl.selling - fpl.bank).toFixed(1)}m more to afford ${candidate.short}.`
+      : inSquad
+        ? `${candidate.short} is already in your squad. Choose a different replacement.`
+        : recommend
+          ? `${candidate.short} projects ${gain.toFixed(1)} more points after the transfer cost, with ${candidate.risk.toLowerCase()} playing-time risk.`
+          : 'The projected improvement does not justify this move under the sample rule. Keeping your squad is a valid choice.'
+  return (
+    <>
+      <div className="breadcrumb">
+        <span>FPL Assistant</span>
+        <span>/</span>
+        <b>Transfer planner</b>
+      </div>
+      <PageTitle
+        green
+        kicker="A LITTLE DATA. A BETTER GAME PLAN."
+        title="Make the right move"
+        description="Compare your options. Keep your edge."
+      >
+        <span className="illustrative-label">Illustrative predictions</span>
+      </PageTitle>
+      <div className="fpl-context">
+        <span className="fpl-mark">
+          <ShieldCheck />
+        </span>
+        <span className="od-field">
+          <strong>Your FPL game plan</strong>
+          <small>Sample 2024/25 squad · independent FPL companion</small>
+        </span>
+        <button className="secondary-button" onClick={() => setEditing(true)}>
+          <Pencil size={16} />
+          Edit squad
+        </button>
+      </div>
+      <div className="fpl-grid">
+        <section className="panel fpl-controls">
+          <span className="eyebrow green">01 / SET THE SCENE</span>
+          <h2>Your transfer setup</h2>
+          <label className="field-label">
+            Player to transfer out
+            <select
+              value={fpl.outgoingId}
+              onChange={(e) => actions.setFpl({ outgoingId: e.target.value })}
+            >
+              {fpl.squad
+                .filter((p) => p.position === 'MID')
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="field-label">
+            Selling price (£m)
+            <input
+              type="number"
+              min="0"
+              max="20"
+              step="0.1"
+              value={fpl.selling}
+              onChange={(e) => setNumber('selling', e.target.value)}
+            />
+          </label>
+          <div className="two-col">
+            <label className="field-label">
+              In the bank (£m)
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={fpl.bank}
+                onChange={(e) => setNumber('bank', e.target.value)}
+              />
+            </label>
+            <label className="field-label">
+              Free transfers
+              <select
+                value={fpl.free}
+                onChange={(e) => actions.setFpl({ free: Number(e.target.value) })}
+              >
+                {[0, 1, 2, 3, 4, 5].map((n) => (
+                  <option key={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <fieldset className="horizon-field">
+            <legend className="field-label">Planning horizon</legend>
+            <div className="segmented horizon">
+              {[1, 2, 4, 6].map((n) => (
+                <button
+                  key={n}
+                  className={fpl.horizon === n ? 'active' : ''}
+                  aria-pressed={fpl.horizon === n}
+                  onClick={() => actions.setFpl({ horizon: n })}
+                >
+                  {n} GW
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <label className="field-label">
+            Other planned transfers
+            <select
+              value={fpl.other}
+              onChange={(e) => actions.setFpl({ other: Number(e.target.value) })}
+            >
+              {[0, 1, 2, 3].map((n) => (
+                <option key={n}>{n}</option>
+              ))}
+            </select>
+          </label>
+          <div className="settings-line">
+            <span>Points penalty</span>
+            <strong className={penalty ? 'orange' : 'green'}>
+              {penalty ? `−${penalty} points` : 'No points hit'}
+            </strong>
+          </div>
+          <div className="mini-pitch" aria-label="Sample squad preview">
+            <div className="pitch-center" />
+            {(['GK', 'DEF', 'MID', 'FWD'] as const).map((position) => (
+              <div className="pitch-line" key={position}>
+                {fpl.squad
+                  .filter((p) => p.position === position)
+                  .slice(
+                    0,
+                    position === 'GK' ? 1 : position === 'DEF' ? 3 : position === 'MID' ? 4 : 3,
+                  )
+                  .map((p) => (
+                    <span className="pitch-player" key={p.id}>
+                      <Shirt size={20} />
+                      <span>{p.name}</span>
+                    </span>
+                  ))}
+              </div>
+            ))}
+          </div>
+          <p className="draft-help">
+            Edit your 15-player squad. This sample comparison covers midfield transfers only.
+            Renaming a player does not update their sample prediction.
+          </p>
+        </section>
+        <div className="fpl-main">
+          <section className="panel">
+            <div className="section-bar">
+              <div className="od-field">
+                <span className="eyebrow green">02 / WEIGH YOUR OPTIONS</span>
+                <h2>One spot. A few possibilities.</h2>
+              </div>
+              <span className="count-tag">{fpl.horizon} gameweeks</span>
+            </div>
+            <div className="fpl-comparison">
+              <div className="fpl-table-head">
+                <span>REPLACEMENT</span>
+                <span>PRICE</span>
+                <span>PREDICTED PTS</span>
+                <span>MINUTES RISK</span>
+              </div>
+              {candidates.map((p) => (
+                <button
+                  className={`fpl-player-row ${fpl.candidateId === p.id ? 'selected' : ''}`}
+                  key={p.id}
+                  aria-pressed={fpl.candidateId === p.id}
+                  onClick={() => actions.setFpl({ candidateId: p.id })}
+                >
+                  <span className="od-row">
+                    <span className={`radio-dot ${fpl.candidateId === p.id ? 'on' : ''}`} />
+                    <span className="shirt-disc">
+                      <Shirt />
+                    </span>
+                    <span className="od-field">
+                      <strong>{p.name}</strong>
+                      <small>
+                        {p.team} · MID{fpl.squad.some((s) => s.id === p.id) ? ' · In squad' : ''}
+                      </small>
+                    </span>
+                  </span>
+                  <span>£{p.price.toFixed(1)}m</span>
+                  <strong>{(p.points * fpl.horizon).toFixed(1)}</strong>
+                  <span className={`risk ${p.risk.toLowerCase()}`}>{p.risk}</span>
+                </button>
+              ))}
+            </div>
+            <div className="fixture-line">
+              <span className="eyebrow">{candidate.short}’S SAMPLE FIXTURES</span>
+              <div className="od-cluster">
+                {candidate.fixtures.slice(0, fpl.horizon).map((fixture, i) => (
+                  <span className={`fixture ${i % 3 === 0 ? 'easy' : ''}`} key={fixture}>
+                    {fixture}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+          <section className="fpl-verdict" aria-live="polite">
+            <span className="eyebrow green">03 / THE BIG PICTURE</span>
+            <div className="verdict-title">
+              <div>
+                <h2>
+                  {!affordable || !valid
+                    ? 'This move needs more budget.'
+                    : inSquad || !recommend
+                      ? 'Save your transfer.'
+                      : `Bring in ${candidate.short}.`}
+                </h2>
+                <p>{reason}</p>
+              </div>
+              <span className="verdict-mark">{recommend ? <Check /> : <ShieldCheck />}</span>
+            </div>
+            <div className="points-comparison">
+              <div className="od-stat">
+                <span>KEEP {outgoing.name.toUpperCase()}</span>
+                <strong>
+                  {keep.toFixed(1)}
+                  <small> pts</small>
+                </strong>
+                <div className="comparison-bar">
+                  <span style={{ transform: `scaleX(${keep / Math.max(keep, gross, 1)})` }} />
+                </div>
+              </div>
+              <div className="od-stat">
+                <span>TRANSFER IN {candidate.short.toUpperCase()}</span>
+                <strong>
+                  {net.toFixed(1)}
+                  <small> pts</small>
+                </strong>
+                <div className="comparison-bar green-bar">
+                  <span
+                    style={{ transform: `scaleX(${Math.max(0, net) / Math.max(keep, gross, 1)})` }}
+                  />
+                </div>
+                <small>{gross.toFixed(1)} before penalty</small>
+              </div>
+              <div className="od-stat net-points">
+                <span>NET CHANGE</span>
+                <strong className={gain > 0 ? 'green' : 'orange'}>
+                  {gain > 0 ? '+' : ''}
+                  {gain.toFixed(1)}
+                </strong>
+                <small>{penalty ? `Includes −${penalty} points` : 'No points hit'}</small>
+              </div>
+            </div>
+            <div className="uncertainty-note">
+              <Info />
+              <p>
+                Sample heuristic, not an ML service. Illustrative transfer range:{' '}
+                {Math.max(0, Math.round(gross * 0.75))}–{Math.round(gross * 1.25)} points before
+                penalties. This range is not calibrated confidence. Rotation, injuries, and match
+                events can change the outcome.
+              </p>
+            </div>
+            <button
+              className="fpl-primary full"
+              disabled={saving || !valid}
+              onClick={async () => {
+                setSaving(true)
+                await new Promise((r) => setTimeout(r, 250))
+                actions.savePlan()
+                setSaving(false)
+              }}
+            >
+              {saving
+                ? 'Saving your plan…'
+                : savedPlan
+                  ? 'Plan saved in this browser'
+                  : recommend
+                    ? 'Save transfer plan'
+                    : 'Save keep-squad plan'}
+              {savedPlan ? <Check /> : <ArrowRight />}
+            </button>
+            {savedPlan && (
+              <p className="saved-plan" role="status">
+                Saved locally · {new Date(savedPlan.savedAt).toLocaleDateString()}. Your comparison
+                will be here when you return.
+              </p>
+            )}
+            <p className="draft-help">
+              Planning only. No changes are made to your official FPL team. Sample prices, fixtures,
+              and affiliations are not current data.
+            </p>
+          </section>
+        </div>
+      </div>
+      {editing && <SquadEditor squad={fpl.squad} onClose={() => setEditing(false)} />}
+    </>
+  )
 }
 function SquadEditor({ squad, onClose }: { squad: SquadPlayer[]; onClose: () => void }) {
   const [draft, setDraft] = useState(() => structuredClone(squad))
   const [error, setError] = useState('')
-  return <Modal title="Your 15-player squad" onClose={onClose}><p>2 goalkeepers, 5 defenders, 5 midfielders, 3 forwards. Edit names to personalize this sample; the underlying sample forecasts stay attached to each slot.</p><form onSubmit={(e) => { e.preventDefault(); const message = validateSquad(draft); if (message) { setError(message); return } actions.setFpl({ squad: draft.map((p) => ({ ...p, name: p.name.trim() })) }); onClose() }} noValidate><div className="squad-editor">{draft.map((player, index) => <div className="squad-edit-row" key={player.id}><label><span className="eyebrow">{player.position}</span><input aria-label={`${player.position} player ${index + 1}`} maxLength={40} value={player.name} onChange={(e) => { setDraft(draft.map((p, i) => i === index ? { ...p, name: e.target.value } : p)); setError('') }}/></label></div>)}</div>{error && <p className="form-error" role="alert">{error}</p>}<button className="fpl-primary full">Save squad<Check/></button></form></Modal>
+  return (
+    <Modal title="Your 15-player squad" onClose={onClose}>
+      <p>
+        2 goalkeepers, 5 defenders, 5 midfielders, 3 forwards. Edit names to personalize this
+        sample; the underlying sample forecasts stay attached to each slot.
+      </p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          const message = validateSquad(draft)
+          if (message) {
+            setError(message)
+            return
+          }
+          actions.setFpl({ squad: draft.map((p) => ({ ...p, name: p.name.trim() })) })
+          onClose()
+        }}
+        noValidate
+      >
+        <div className="squad-editor">
+          {draft.map((player, index) => (
+            <div className="squad-edit-row" key={player.id}>
+              <label>
+                <span className="eyebrow">{player.position}</span>
+                <input
+                  aria-label={`${player.position} player ${index + 1}`}
+                  maxLength={40}
+                  value={player.name}
+                  onChange={(e) => {
+                    setDraft(
+                      draft.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)),
+                    )
+                    setError('')
+                  }}
+                />
+              </label>
+            </div>
+          ))}
+        </div>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="fpl-primary full">
+          Save squad
+          <Check />
+        </button>
+      </form>
+    </Modal>
+  )
 }

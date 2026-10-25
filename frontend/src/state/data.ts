@@ -1,14 +1,57 @@
-import playerData from './players.json'
+import playerData from './players.json' with { type: 'json' }
 import type { AppState, Player, SquadPlayer } from './types'
 
 export const players: Player[] = playerData
 export const playerById = (id: number) => players.find((player) => player.id === id)!
-export const initials = (name: string) => name.split(/[\s-]+/).filter(Boolean).map((word) => word[0]).slice(0, 2).join('').toUpperCase()
+export const initials = (name: string) =>
+  name
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 export const candidates = [
-  { id: 'mbeumo', name: 'Bryan Mbeumo', short: 'Mbeumo', team: 'BRE', price: 7.5, points: 5.4, risk: 'Low', fixtures: ['LEI (H)', 'SOU (A)', 'WHU (H)', 'AVL (A)', 'FUL (H)', 'EVE (A)'] },
-  { id: 'bruno', name: 'Bruno Fernandes', short: 'Fernandes', team: 'MUN', price: 8.5, points: 5.7, risk: 'Low', fixtures: ['EVE (H)', 'IPS (A)', 'ARS (A)', 'NFO (H)', 'MCI (A)', 'BOU (H)'] },
-  { id: 'gordon', name: 'Anthony Gordon', short: 'Gordon', team: 'NEW', price: 7.4, points: 4.8, risk: 'Medium', fixtures: ['WHU (H)', 'CRY (A)', 'LIV (H)', 'BRE (A)', 'LEI (H)', 'IPS (A)'] },
-  { id: 'rogers', name: 'Morgan Rogers', short: 'Rogers', team: 'AVL', price: 5.5, points: 4.2, risk: 'Medium', fixtures: ['CRY (H)', 'CHE (A)', 'BRE (H)', 'SOU (H)', 'NFO (A)', 'MCI (H)'] },
+  {
+    id: 'mbeumo',
+    name: 'Bryan Mbeumo',
+    short: 'Mbeumo',
+    team: 'BRE',
+    price: 7.5,
+    points: 5.4,
+    risk: 'Low',
+    fixtures: ['LEI (H)', 'SOU (A)', 'WHU (H)', 'AVL (A)', 'FUL (H)', 'EVE (A)'],
+  },
+  {
+    id: 'bruno',
+    name: 'Bruno Fernandes',
+    short: 'Fernandes',
+    team: 'MUN',
+    price: 8.5,
+    points: 5.7,
+    risk: 'Low',
+    fixtures: ['EVE (H)', 'IPS (A)', 'ARS (A)', 'NFO (H)', 'MCI (A)', 'BOU (H)'],
+  },
+  {
+    id: 'gordon',
+    name: 'Anthony Gordon',
+    short: 'Gordon',
+    team: 'NEW',
+    price: 7.4,
+    points: 4.8,
+    risk: 'Medium',
+    fixtures: ['WHU (H)', 'CRY (A)', 'LIV (H)', 'BRE (A)', 'LEI (H)', 'IPS (A)'],
+  },
+  {
+    id: 'rogers',
+    name: 'Morgan Rogers',
+    short: 'Rogers',
+    team: 'AVL',
+    price: 5.5,
+    points: 4.2,
+    risk: 'Medium',
+    fixtures: ['CRY (H)', 'CHE (A)', 'BRE (H)', 'SOU (H)', 'NFO (A)', 'MCI (H)'],
+  },
 ]
 export const sampleSquad: SquadPlayer[] = [
   { id: 'raya', name: 'Raya', position: 'GK', points: 4.1 },
@@ -29,12 +72,32 @@ export const sampleSquad: SquadPlayer[] = [
 ]
 export function initialState(): AppState {
   return {
-    version: 1, profile: { name: 'Sam Taylor', reducedMotion: false }, savedPlan: null,
-    fpl: { squad: sampleSquad, outgoingId: 'eze', candidateId: 'mbeumo', selling: 7, bank: 1.5, free: 1, other: 0, horizon: 4 },
+    version: 1,
+    profile: { name: 'Sam Taylor', reducedMotion: false },
+    savedPlan: null,
+    fpl: {
+      squad: sampleSquad,
+      outgoingId: 'eze',
+      candidateId: 'mbeumo',
+      selling: 7,
+      bank: 1.5,
+      free: 1,
+      other: 0,
+      horizon: 4,
+    },
     leagues: [
       {
-        id: 'sunday', name: 'The Sunday League', code: 'SUNDAY', capacity: 4, rosterSize: 5, timer: 60,
-        ownerId: 'maya', userId: 'you', status: 'live', remaining: 60, queue: [],
+        id: 'sunday',
+        name: 'The Sunday League',
+        code: 'SUNDAY',
+        capacity: 4,
+        rosterSize: 5,
+        timer: 60,
+        ownerId: 'maya',
+        userId: 'you',
+        status: 'live',
+        remaining: 60,
+        queue: [],
         participants: [
           { id: 'maya', name: 'Maya Chen', team: 'Buckets & Chill', guest: true },
           { id: 'alex', name: 'Alex Rivera', team: 'The Bench Mob', guest: true },
@@ -48,8 +111,18 @@ export function initialState(): AppState {
         ],
       },
       {
-        id: 'office', name: 'Office Hoops', code: 'OFFICE', capacity: 4, rosterSize: 4, timer: 45,
-        ownerId: 'you', userId: 'you', status: 'lobby', remaining: 45, queue: [], picks: [],
+        id: 'office',
+        name: 'Office Hoops',
+        code: 'OFFICE',
+        capacity: 4,
+        rosterSize: 4,
+        timer: 45,
+        ownerId: 'you',
+        userId: 'you',
+        status: 'lobby',
+        remaining: 45,
+        queue: [],
+        picks: [],
         participants: [
           { id: 'you', name: 'Sam Taylor', team: 'Court Vision', guest: false },
           { id: 'maya', name: 'Maya Chen', team: 'Buckets & Chill', guest: true },

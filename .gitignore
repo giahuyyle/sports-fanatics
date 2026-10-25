@@ -10,3 +10,5 @@ __pycache__/
 !.env.example
 .DS_Store
 *.egg-info/
+playwright-report/
+test-results/

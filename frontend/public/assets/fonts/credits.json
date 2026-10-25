@@ -1,0 +1,14 @@
+{
+  "display": {
+    "family": "Barlow Condensed",
+    "source": "https://github.com/google/fonts/tree/main/ofl/barlowcondensed",
+    "license": "SIL Open Font License 1.1; see Barlow-Condensed-OFL.txt",
+    "notes": "Bold recovered from the supplied design canvas; semibold from Google Fonts."
+  },
+  "body": {
+    "family": "DM Sans",
+    "source": "https://github.com/google/fonts/tree/main/ofl/dmsans",
+    "license": "SIL Open Font License 1.1; see DM-Sans-OFL.txt",
+    "notes": "Variable font replaces the canvas's bold-only body font to support the specified weights."
+  }
+}

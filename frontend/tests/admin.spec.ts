@@ -98,6 +98,7 @@ test('admin signs in, edits players, imports stats, publishes a pool, and fits m
   await expect(page.getByRole('button', { name: 'Validate and publish pool' })).toBeDisabled()
   await page.getByRole('button', { name: 'Save selected players' }).click()
   await expect(page.getByRole('button', { name: 'Validate and publish pool' })).toBeEnabled()
+  page.once('dialog', (dialog) => dialog.accept())
   await page.getByRole('button', { name: 'Validate and publish pool' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Player pool published.' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Save selected players' })).toBeDisabled()

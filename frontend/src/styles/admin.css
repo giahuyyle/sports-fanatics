@@ -1,0 +1,123 @@
+.admin-page {
+  display: grid;
+  gap: 24px;
+}
+.admin-page .page-title {
+  margin-bottom: 0;
+}
+.admin-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.admin-page .panel {
+  min-width: 0;
+  padding: 24px;
+}
+.admin-page h2 {
+  margin-bottom: 12px;
+}
+.admin-page h3 {
+  margin-top: 24px;
+}
+.admin-page form {
+  display: grid;
+  gap: 16px;
+}
+.admin-page fieldset {
+  border: 1px solid var(--line);
+  padding: 12px;
+  min-width: 0;
+}
+.admin-positions,
+.admin-session,
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.admin-page .admin-search {
+  display: flex;
+  align-items: end;
+  margin-bottom: 16px;
+}
+.admin-search .field-label {
+  flex: 1;
+  min-width: 180px;
+}
+.admin-session {
+  justify-content: space-between;
+}
+.admin-signin {
+  max-width: 520px;
+}
+.admin-signin > button {
+  margin-top: 16px;
+}
+.admin-page .field-label {
+  min-width: 0;
+}
+.admin-page input:not([type='checkbox']),
+.admin-page select {
+  width: 100%;
+  min-width: 0;
+}
+.admin-table-wrap {
+  overflow-x: auto;
+}
+.admin-table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+}
+.admin-table th,
+.admin-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.admin-table input[type='checkbox'] {
+  min-height: 24px;
+  min-width: 24px;
+}
+.admin-records {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+.admin-error {
+  position: sticky;
+  bottom: 12px;
+  background: var(--panel);
+  padding: 16px;
+  border: 1px solid currentColor;
+  overflow-wrap: anywhere;
+  z-index: 1;
+}
+@media (max-width: 900px) {
+  .admin-columns {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .admin-page .panel {
+    padding: 16px;
+  }
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* Keep absolute screen-reader labels inside the table's scroll container. */
+.admin-table-wrap {
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+}

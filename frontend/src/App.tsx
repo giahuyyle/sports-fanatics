@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { MotionConfig, motion } from 'motion/react'
 import { useRoute, navigate } from './state/router'
 import { useStore } from './state/store'
@@ -10,6 +10,7 @@ import { LeagueForm, Leagues, Lobby } from './pages/Leagues'
 import { Draft, Recap } from './pages/Draft'
 import Fpl from './pages/Fpl'
 import Settings from './pages/Settings'
+const Admin = lazy(() => import('./pages/Admin'))
 import type { League } from './state/types'
 
 function LeaguePage({ league, path }: { league: League; path: string }) {
@@ -47,6 +48,12 @@ export default function App() {
     page = <LeagueForm key={path} join={path.endsWith('join')} />
   else if (path === '/fpl') page = <Fpl />
   else if (path === '/settings') page = <Settings />
+  else if (path === '/admin')
+    page = (
+      <Suspense fallback={<p role="status">Loading administration…</p>}>
+        <Admin />
+      </Suspense>
+    )
   else {
     const match = path.match(/^\/nba\/leagues\/([^/]+)\/(lobby|draft|recap)$/)
     const league = match && leagues.find((l) => l.id === match[1])

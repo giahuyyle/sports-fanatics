@@ -17,6 +17,7 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
     { name: 'NBA Fantasy', to: '/nba', icon: Volleyball },
     { name: 'FPL Assistant', to: '/fpl', icon: Volleyball },
     { name: 'Profile & settings', to: '/settings', icon: Settings },
+    { name: 'NBA administration', to: '/admin', icon: Settings },
   ]
   const go = (to: string) => {
     setOpen(false)
@@ -101,7 +102,9 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
               </select>
             </label>
           )}
-          <span className="prototype-label">Local demo · sample data</span>
+          <span className="prototype-label">
+            {path === '/admin' ? 'Administration · connected API' : 'Local demo · sample data'}
+          </span>
           <button
             className="icon-button"
             aria-label="About this demo"
@@ -122,7 +125,9 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
               SPORTS FANATICS<span className="orange">.</span>
             </span>
             <span>Built for the love of the game.</span>
-            <span>Interactive prototype · sample data</span>
+            <span>
+              {path === '/admin' ? 'NBA administration' : 'Interactive prototype · sample data'}
+            </span>
           </footer>
         </main>
       </div>

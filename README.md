@@ -17,10 +17,17 @@ League draft and an Office Hoops lobby. Use Settings to clear leagues or restore
 samples. Guest managers make simulated picks, and the timer pauses when the draft
 page is closed, the tab is hidden, or the demo is offline.
 
-**Service boundary:** invite codes only join leagues in the same browser. There
-is no authentication, remote multiplayer, database persistence, live statistics,
-or ML inference yet. The FastAPI backend still provides its health endpoint.
-FPL prices, fixtures, affiliations, and projections are explicitly illustrative.
+**Service boundary:** gameplay pages remain a browser-local demo with simulated
+opponents and sample statistics. The NBA backend now implements Firebase identity,
+PostgreSQL persistence, private leagues, atomic snake drafts, authoritative timeout
+workers, event replay, and lineup validation. `/#/admin` connects to protected
+player/import/pool APIs; gameplay UI integration is the next milestone. FPL remains
+illustrative.
+
+Backend setup and deployment: [operations guide](docs/backend/README.md).
+API contracts: [integration guide](docs/backend/INTEGRATION.md).
+Imports: [formats and synthetic examples](docs/imports/README.md).
+Versioned schema diagrams: [database history](docs/database/README.md).
 
 Design references are in `docs/design/`. The original canvas's fonts and styles
 were recovered into the frontend; the old prototype build commands in those
@@ -42,6 +49,9 @@ cd backend
 uv sync
 uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+Start PostgreSQL, migrate the schema, configure Firebase, and run the timeout
+worker as described in the [backend operations guide](docs/backend/README.md).
 
 API: http://127.0.0.1:8000/api/health
 

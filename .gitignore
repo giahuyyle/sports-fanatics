@@ -12,3 +12,6 @@ __pycache__/
 *.egg-info/
 playwright-report/
 test-results/
+# Local Firebase emulator logs
+firebase-debug.log*
+*-debug.log

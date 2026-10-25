@@ -21,7 +21,12 @@ def normalized_name(name: str) -> tuple[str, str]:
     display = " ".join(unicodedata.normalize("NFKC", name).split())
     if not display or any(unicodedata.category(c).startswith("C") for c in display):
         raise DomainError("invalid_team_name", "Enter a visible team name.", 422)
-    return display, display.casefold()
+    key = display.casefold()
+    if len(display) > 80 or len(key) > 240:
+        raise DomainError(
+            "invalid_team_name", "Team name is too long after normalization.", 422
+        )
+    return display, key
 
 
 @router.get("/me")

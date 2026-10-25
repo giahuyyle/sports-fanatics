@@ -129,3 +129,52 @@ def test_import_is_atomic_repeatable_and_keeps_splits(db_app):
     assert client.get(f"/api/v1/players/{player['id']}", headers=headers()).json()[
         "positions"
     ] == ["PG", "SF"]
+
+
+def test_csv_and_career_gap_validation(db_app):
+    import csv
+    import io
+
+    _, client = db_app
+    player = make_player(
+        client, rookie_season=current_season() - 2, no_appearances=False
+    )
+    assert len(player["coverage"]["missing_seasons"]) == 3
+    fields = ["player_id", "season", "phase", "scope", *Totals.model_fields]
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=fields)
+    writer.writeheader()
+    for season in range(current_season() - 2, current_season() + 1):
+        writer.writerow(
+            {
+                "player_id": player["id"],
+                "season": season,
+                "phase": "regular",
+                "scope": "TOTAL",
+                **{k: 0 for k in Totals.model_fields},
+            }
+        )
+
+    def upload(data):
+        return client.post(
+            "/api/v1/admin/imports",
+            headers=headers(),
+            json={"source": "Synthetic CSV fixture", "format": "csv", "data": data},
+        )
+
+    assert upload(buffer.getvalue()).status_code == 200
+    history = client.get(
+        f"/api/v1/players/{player['id']}/history", headers=headers()
+    ).json()
+    assert history["coverage"]["complete"]
+    assert history["seasons"][0]["averages"]["points"] is None
+    malformed = buffer.getvalue().replace("player_id,", "player_id,player_id,", 1)
+    assert upload(malformed).status_code == 422
+    assert (
+        client.post(
+            "/api/v1/admin/nba-teams",
+            headers=headers(),
+            json={"code": "TOTAL", "name": "Invalid"},
+        ).status_code
+        == 422
+    )

@@ -1,4 +1,5 @@
 import threading
+import time
 from typing import Annotated
 
 import firebase_admin
@@ -27,7 +28,12 @@ def verify_token(token: str, project_id: str) -> dict:
                 options={"projectId": project_id}, name=project_id
             )
     try:
-        return auth.verify_id_token(token, app=firebase_app, check_revoked=True)
+        claims = auth.verify_id_token(token, app=firebase_app, check_revoked=True)
+        # The emulator omits the SDK's time validation. Keep local behavior strict.
+        expires = claims.get("exp")
+        if not isinstance(expires, (int, float)) or expires <= time.time():
+            raise ValueError("Token has expired")
+        return claims
     except (ValueError, firebase_admin.exceptions.FirebaseError) as exc:
         raise DomainError("invalid_token", "Sign in again to continue.", 401) from exc
 

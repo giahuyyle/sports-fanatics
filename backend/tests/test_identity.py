@@ -45,3 +45,11 @@ def test_global_name_race(db_app):
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         assert sorted(executor.map(claim, ["alice", "bob"])) == [201, 409]
+
+
+def test_expanding_unicode_name_is_rejected(db_app):
+    _, client = db_app
+    response = client.post(
+        "/api/v1/me/team", headers=headers("alice"), json={"name": "ﷺ" * 20}
+    )
+    assert response.status_code == 422

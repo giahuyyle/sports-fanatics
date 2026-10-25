@@ -131,3 +131,72 @@ def test_concurrent_picks_one_turn(db_app):
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         assert sorted(executor.map(submit, [str(uuid4()), str(uuid4())])) == [200, 409]
+
+
+def test_league_authorization_and_conflicts(db_app):
+    app, client = db_app
+    state, managers = setup_league(client)
+    url = f"/api/v1/leagues/{state['id']}"
+    owner = "user0"
+    manager = managers[state["draft"]["current_entry_id"]]
+    other = next(uid for uid in managers.values() if uid != manager)
+    body = next_request(app, state)
+    assert (
+        client.post(url + "/picks", headers=headers(other), json=body).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            url + "/picks",
+            headers=headers(manager),
+            json={**body, "expected_revision": 999},
+        ).status_code
+        == 409
+    )
+    assert (
+        client.post(
+            url + "/picks",
+            headers=headers(manager),
+            json={**body, "pool_player_id": str(uuid4())},
+        ).status_code
+        == 422
+    )
+    assert (
+        client.put(
+            url + "/queue",
+            headers=headers(manager),
+            json={"pool_player_ids": [body["pool_player_id"]] * 2},
+        ).status_code
+        == 422
+    )
+    result = client.post(url + "/picks", headers=headers(manager), json=body)
+    assert result.status_code == 200
+    assert (
+        client.post(
+            url + "/picks",
+            headers=headers(manager),
+            json={**body, "pool_player_id": str(uuid4())},
+        ).json()["error"]["code"]
+        == "idempotency_conflict"
+    )
+    assert client.post(url + "/start", headers=headers("user1")).status_code == 403
+    assert client.post(url + "/start", headers=headers(owner)).status_code == 409
+    lobby = client.post(
+        "/api/v1/leagues",
+        headers=headers(owner),
+        json={"name": "Not full", "pool_id": state["pool_id"], "capacity": 4},
+    ).json()
+    assert (
+        client.post(
+            f"/api/v1/leagues/{lobby['id']}/start", headers=headers(owner)
+        ).json()["error"]["code"]
+        == "league_not_full"
+    )
+    assert (
+        client.post(
+            "/api/v1/leagues/join",
+            headers=headers(owner),
+            json={"invite_code": "does-not-exist"},
+        ).status_code
+        == 404
+    )

@@ -22,7 +22,7 @@ from app.db.catalog import (
     PoolPlayer,
     SeasonStats,
 )
-from app.domain.catalog import audit, coverage, current_season
+from app.domain.catalog import POSITIONS, audit, coverage, current_season
 from app.errors import DomainError
 from app.observability import record
 
@@ -228,7 +228,8 @@ def write_player(session, body, player):
     session.add_all(
         [
             PlayerPosition(player_id=player.id, position=p)
-            for p in sorted(set(body.positions))
+            for p in POSITIONS
+            if p in body.positions
         ]
     )
     session.add_all(
@@ -252,7 +253,11 @@ def create_player(body: PlayerInput, user: AdminDep, session: SessionDep):
 def edit_player(
     player_id: UUID, body: PlayerInput, user: AdminDep, session: SessionDep
 ):
-    player = get_or_404(session, Player, player_id)
+    player = session.scalar(
+        select(Player).where(Player.id == player_id).with_for_update()
+    )
+    if not player:
+        raise DomainError("not_found", "Player was not found.", 404)
     write_player(session, body, player)
     audit(session, user, "player.update", player.id, body.model_dump(mode="json"))
     session.commit()
@@ -261,6 +266,10 @@ def edit_player(
 
 @router.post("/admin/nba-teams", status_code=201)
 def create_nba_team(body: TeamInput, user: AdminDep, session: SessionDep):
+    if body.code == "TOTAL":
+        raise DomainError(
+            "invalid_team_code", "TOTAL is reserved for season aggregates.", 422
+        )
     team = NBATeam(**body.model_dump())
     session.add(team)
     session.flush()
@@ -282,7 +291,17 @@ def parse_rows(body):
             raise ValueError("JSON import must be an array")
     else:
         raw = []
-        for item in csv.DictReader(io.StringIO(body.data)):
+        reader = csv.DictReader(io.StringIO(body.data))
+        expected = {"player_id", "season", "phase", "scope", *Totals.model_fields}
+        if (
+            not reader.fieldnames
+            or set(reader.fieldnames) != expected
+            or len(reader.fieldnames) != len(expected)
+        ):
+            raise ValueError(
+                "CSV headers must match required fields without duplicates"
+            )
+        for item in reader:
             stats = {key: item.pop(key, None) for key in Totals.model_fields}
             raw.append({**item, "totals": stats})
     if not raw or len(raw) > 10000:
@@ -429,8 +448,12 @@ def select_pool_players(
             "pool_immutable", "Create a new pool version to change eligibility."
         )
     session.execute(delete(PoolPlayer).where(PoolPlayer.pool_id == pool_id))
-    for player_id in set(body.player_ids):
-        player = get_or_404(session, Player, player_id)
+    for player_id in sorted(set(body.player_ids), key=str):
+        player = session.scalar(
+            select(Player).where(Player.id == player_id).with_for_update()
+        )
+        if not player:
+            raise DomainError("not_found", "Player was not found.", 404)
         if player.archived:
             raise DomainError(
                 "player_archived", "Archived players cannot enter a new pool."
@@ -462,13 +485,17 @@ def publish_pool(pool_id: UUID, user: AdminDep, session: SessionDep):
     if pool.status != "draft":
         raise DomainError("pool_immutable", "This pool is already published.")
     entries = session.scalars(
-        select(PoolPlayer).where(PoolPlayer.pool_id == pool_id)
+        select(PoolPlayer)
+        .where(PoolPlayer.pool_id == pool_id)
+        .order_by(PoolPlayer.player_id)
     ).all()
     if not entries:
         raise DomainError("pool_empty", "Select players before publishing.")
     problems = []
     for entry in entries:
-        player = session.get(Player, entry.player_id)
+        player = session.scalar(
+            select(Player).where(Player.id == entry.player_id).with_for_update()
+        )
         if (
             player.archived
             or not entry.positions

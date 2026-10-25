@@ -9,6 +9,7 @@ from ortools.sat.python import cp_model
 
 from app.domain.catalog import POSITIONS
 from app.errors import DomainError
+from app.observability import record
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,10 @@ def solve_completion(players, managers, selected, timeout=2.0):
     solver.parameters.num_search_workers = 1
     started = time.monotonic()
     status = solver.solve(model)
+    record("solver_calls")
+    record("solver_seconds_total", time.monotonic() - started)
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE, cp_model.INFEASIBLE):
+        record("solver_timeouts")
     logger.info(
         "roster_solver",
         extra={

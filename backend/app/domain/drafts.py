@@ -8,6 +8,7 @@ from app.db.catalog import PoolPlayer
 from app.db.draft import Draft, League, LeagueEntry, Pick, QueueItem, RosterSlot
 from app.db.identity import FantasyTeam
 from app.domain.catalog import POSITIONS
+from app.domain.events import emit
 from app.domain.roster import Candidate, solve_completion, validate_completion
 from app.errors import DomainError
 
@@ -92,6 +93,12 @@ def start_draft(session, league, timeout):
     session.add(draft)
     league.status = "live"
     session.flush()
+    emit(
+        session,
+        draft,
+        "draft.started",
+        {"order": order, "deadline": draft.deadline.isoformat()},
+    )
     return draft
 
 
@@ -141,6 +148,20 @@ def commit_selection(
     else:
         draft.deadline = datetime.now(UTC) + timedelta(seconds=league.timer)
     session.flush()
+    emit(
+        session,
+        draft,
+        "pick.committed",
+        {
+            "pick_id": str(pick.id),
+            "number": count,
+            "entry_id": manager,
+            "pool_player_id": player_id,
+            "automatic": automatic,
+            "status": league.status,
+            "deadline": draft.deadline.isoformat() if draft.deadline else None,
+        },
+    )
     return pick
 
 
@@ -245,4 +266,5 @@ def automatic_pick(session, league, draft, timeout):
     )
     draft.deadline = None
     draft.revision += 1
+    emit(session, draft, "draft.paused", {"reason": draft.pause_reason})
     return None

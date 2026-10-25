@@ -1,6 +1,8 @@
 """Print a physical Mermaid schema snapshot from the model metadata."""
 
 import app.db.catalog  # noqa: F401
+import app.db.draft  # noqa: F401
+import app.db.events  # noqa: F401
 import app.db.identity  # noqa: F401
 from app.db.base import Base
 

@@ -21,6 +21,7 @@ from app.domain.drafts import (
     team_for,
     turn,
 )
+from app.domain.events import emit
 from app.domain.roster import validate_lineup
 from app.errors import DomainError
 
@@ -265,5 +266,8 @@ def replace_lineup(
             for s in slots
         ]
     )
+    draft = session.get(Draft, league_id)
+    draft.revision += 1
+    emit(session, draft, "lineup.updated", {"entry_id": str(entry.id)})
     session.commit()
     return {"slots": body.slots}

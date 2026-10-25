@@ -24,6 +24,7 @@ from app.db.catalog import (
 )
 from app.domain.catalog import audit, coverage, current_season
 from app.errors import DomainError
+from app.observability import record
 
 router = APIRouter(tags=["players and administration"])
 Position = Literal["PG", "SG", "SF", "PF", "C"]
@@ -325,6 +326,8 @@ def import_stats(body: ImportInput, user: AdminDep, session: SessionDep):
                 errors.append({"row": index, "message": str(exc)})
     except (ValueError, TypeError, csv.Error) as exc:
         errors.append({"row": None, "message": str(exc)})
+    if errors:
+        record("import_failures")
     run.errors = errors
     run.status = "failed" if errors else "complete"
     run.row_count = len(rows) if not errors else 0

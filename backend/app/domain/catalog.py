@@ -24,7 +24,11 @@ def coverage(session, player):
     missing = [
         s for s in range(player.rookie_season, current_season() + 1) if s not in seasons
     ]
-    valid_rookie = player.no_appearances and not any(r.totals["games"] for r in rows)
+    valid_rookie = (
+        player.no_appearances
+        and player.rookie_season == current_season()
+        and not any(r.totals["games"] for r in rows)
+    )
     if valid_rookie:
         missing = []
     return {

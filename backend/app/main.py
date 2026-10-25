@@ -4,15 +4,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.catalog import router as catalog_router
+from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.identity import router as identity_router
 from app.api.leagues import router as leagues_router
 from app.config import Settings
 from app.db.session import make_engine
 from app.errors import install_error_handlers
+from app.observability import configure_logging
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    configure_logging()
     settings = settings or Settings()
     engine = make_engine(settings)
 
@@ -35,6 +38,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(identity_router, prefix="/api/v1")
     app.include_router(catalog_router, prefix="/api/v1")
     app.include_router(leagues_router, prefix="/api/v1")
+    app.include_router(events_router, prefix="/api/v1")
     return app
 
 

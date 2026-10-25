@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException
 
+from app.observability import record
+
 
 class DomainError(Exception):
     def __init__(self, code: str, message: str, status: int = 409):
@@ -13,6 +15,8 @@ class DomainError(Exception):
 def install_error_handlers(app: FastAPI):
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError):
+        if exc.code in ("stale_revision", "player_taken", "idempotency_conflict"):
+            record("pick_conflicts")
         return JSONResponse(
             status_code=exc.status,
             content={"error": {"code": exc.code, "message": exc.message}},

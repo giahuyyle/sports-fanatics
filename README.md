@@ -155,3 +155,20 @@ fallback until a matching credited portrait is added.
 NBA images remain copyrighted. Their sources and rights notes are recorded in
 `frontend/public/assets/players/credits.json`; no commercial redistribution rights
 are asserted. Fonts include their SIL Open Font License files.
+
+## Frontend audit repairs
+
+The [remediation checklist](docs/audits/frontend-remediation.md) maps the 35 audit
+findings to the implemented changes and regression coverage. Player cards use
+team-inspired backgrounds, locally stored NBA logos, a stable portrait frame,
+and aligned position/name/logo and pick rows.
+
+Browser-local updates use Web Locks when available to serialize changes between
+tabs, reread the latest stored state before each write, and synchronize through
+storage events. The local draft clock is deduplicated across tabs. These remain
+demo mechanics; authoritative multiplayer deadlines belong to the backend.
+
+Admin regression tests intercept authentication/API responses and never mutate
+real data. Three additional tests require a live Firebase Auth emulator and
+PostgreSQL API; the normal frontend-only run skips them explicitly. Test runners
+stop their own temporary servers. User-started servers must be left running.

@@ -171,6 +171,14 @@ test('team-colored cards reserve equal portrait, identity and footer rows', asyn
     path: '/private/tmp/sports-fanatics-repairs/cards-desktop.png',
     fullPage: true,
   })
+  await page.getByRole('combobox', { name: 'Inspect a team', exact: true }).selectOption('you')
+  await expect(page.locator('.player-card').first().locator('h3')).toHaveText(
+    'Giannis Antetokounmpo',
+  )
+  await page
+    .locator('.player-card')
+    .first()
+    .screenshot({ path: '/private/tmp/sports-fanatics-repairs/giannis-card.png' })
   await page.setViewportSize({ width: 375, height: 812 })
   await page.screenshot({
     path: '/private/tmp/sports-fanatics-repairs/cards-mobile.png',

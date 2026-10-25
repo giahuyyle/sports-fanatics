@@ -1,5 +1,7 @@
 # Sports Fanatics frontend audit
 
+This is the pre-repair audit. See [the completed remediation checklist](frontend-remediation.md) for current status.
+
 Audit date: 25 October 2026. No application files or real admin data were changed.
 
 ## Scope and verification
@@ -18,7 +20,7 @@ P1: prevent wrong writes or loss of saved state. P2: functional, workflow, layou
 
 ### A01 · P1 · Pool switching can associate one pool with another pool’s players
 
-Source: [frontend/src/pages/Admin.tsx:545](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:545)
+Source: [frontend/src/pages/Admin.tsx:545](../../frontend/src/pages/Admin.tsx:545)
 
 **Evidence / reproduction:** Browser reproduced: delay Pool A’s response, then select Pool B. When A finishes last, the dropdown remains B while Alice from A is checked and Bob from B is not. Save is enabled, so the next write can overwrite B with A’s selection.
 
@@ -26,7 +28,7 @@ Source: [frontend/src/pages/Admin.tsx:545](/Users/huylegia/Coding-Projects/sport
 
 ### A02 · P1 · A failed pool load leaves stale players and enables publication
 
-Source: [frontend/src/pages/Admin.tsx:548](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:548)
+Source: [frontend/src/pages/Admin.tsx:548](../../frontend/src/pages/Admin.tsx:548)
 
 **Evidence / reproduction:** Browser reproduced: load A, then return 503 for B. B remains selected, A’s selection remains visible, and Validate and publish pool is enabled. The user is invited to publish a pool whose actual contents were never loaded.
 
@@ -34,7 +36,7 @@ Source: [frontend/src/pages/Admin.tsx:548](/Users/huylegia/Coding-Projects/sport
 
 ### A03 · P1 · Changes made during pool saving are incorrectly marked saved
 
-Source: [frontend/src/pages/Admin.tsx:579](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:579)
+Source: [frontend/src/pages/Admin.tsx:579](../../frontend/src/pages/Admin.tsx:579)
 
 **Evidence / reproduction:** Browser reproduced: Save A with Alice selected, delay the PUT, then check Bob while it is pending. The request contains only Alice, but the UI ends with Alice and Bob checked and Publish enabled. Completion unconditionally clears poolDirty, even though the current selection differs from the request.
 
@@ -42,7 +44,7 @@ Source: [frontend/src/pages/Admin.tsx:579](/Users/huylegia/Coding-Projects/sport
 
 ### A04 · P1 · A stale browser tab can overwrite newer saved state
 
-Source: [frontend/src/state/store.ts:90](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/state/store.ts:90)
+Source: [frontend/src/state/store.ts:90](../../frontend/src/state/store.ts:90)
 
 **Evidence / reproduction:** Browser reproduced with two tabs: change the profile to “Changed in second tab” in B, then queue a player in A. The persisted profile reverts to Sam Taylor. Each tab has an independent in-memory snapshot and every mutation rewrites the whole object; no storage-event synchronization exists. Draft ticks also write this object.
 
@@ -50,7 +52,7 @@ Source: [frontend/src/state/store.ts:90](/Users/huylegia/Coding-Projects/sports-
 
 ### A05 · P2 · Admin player catalog stops at 200 with no pagination
 
-Source: [frontend/src/pages/Admin.tsx:92](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:92)
+Source: [frontend/src/pages/Admin.tsx:92](../../frontend/src/pages/Admin.tsx:92)
 
 **Evidence / reproduction:** Browser reproduced with a 300-player fixture: exactly 200 rows render and there are no next/previous/load-more controls. Search and refresh also hard-code limit=200. The backend already accepts offset and limit. Players after the first 200 cannot be browsed without a narrower search.
 
@@ -58,7 +60,7 @@ Source: [frontend/src/pages/Admin.tsx:92](/Users/huylegia/Coding-Projects/sports
 
 ### A06 · P2 · Archived players already in a draft pool cannot be deselected
 
-Source: [frontend/src/pages/Admin.tsx:478](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:478)
+Source: [frontend/src/pages/Admin.tsx:478](../../frontend/src/pages/Admin.tsx:478)
 
 **Evidence / reproduction:** Browser reproduced: load a draft pool containing an archived player. Its checkbox is checked and disabled. The backend rejects archived players when saving/publishing a draft pool, but the UI gives no way to remove this one from the selection.
 
@@ -66,7 +68,7 @@ Source: [frontend/src/pages/Admin.tsx:478](/Users/huylegia/Coding-Projects/sport
 
 ### A07 · P2 · Changing pools silently discards unsaved selection changes
 
-Source: [frontend/src/pages/Admin.tsx:547](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:547)
+Source: [frontend/src/pages/Admin.tsx:547](../../frontend/src/pages/Admin.tsx:547)
 
 **Evidence / reproduction:** Browser reproduced: load A, add Bob, switch to B, then return to A. Bob is gone, with no warning or preserved draft. Route changes also unmount the editor without guarding unsaved changes.
 
@@ -74,7 +76,7 @@ Source: [frontend/src/pages/Admin.tsx:547](/Users/huylegia/Coding-Projects/sport
 
 ### A08 · P2 · Editing another player during a pending save loses the new editor state
 
-Source: [frontend/src/pages/Admin.tsx:141](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:141)
+Source: [frontend/src/pages/Admin.tsx:141](../../frontend/src/pages/Admin.tsx:141)
 
 **Evidence / reproduction:** Browser reproduced: save Alice with a delayed PUT, then click Edit Bob before it finishes. Bob appears in the editor, then the earlier save clears it and resets the heading to Add player. Edit and Cancel are not disabled by busy.
 
@@ -82,7 +84,7 @@ Source: [frontend/src/pages/Admin.tsx:141](/Users/huylegia/Coding-Projects/sport
 
 ### A09 · P2 · One failed admin read hides otherwise available data
 
-Source: [frontend/src/pages/Admin.tsx:91](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:91)
+Source: [frontend/src/pages/Admin.tsx:91](../../frontend/src/pages/Admin.tsx:91)
 
 **Evidence / reproduction:** Browser reproduced: players, pools, and imports succeed, but audit history returns 503. Promise.all rejects before any setState call, so the catalog shows zero rows and “No players found. Add a player above.” even though the catalog request succeeded.
 
@@ -90,7 +92,7 @@ Source: [frontend/src/pages/Admin.tsx:91](/Users/huylegia/Coding-Projects/sports
 
 ### A10 · P2 · Permission loading is presented as access denial
 
-Source: [frontend/src/pages/Admin.tsx:73](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:73)
+Source: [frontend/src/pages/Admin.tsx:73](../../frontend/src/pages/Admin.tsx:73)
 
 **Evidence / reproduction:** Browser reproduced by delaying GET /me for an authorized user: “Administrator access required” is visible before the permission result arrives. A /me network error also leaves allowed=false and displays the same denial state.
 
@@ -98,7 +100,7 @@ Source: [frontend/src/pages/Admin.tsx:73](/Users/huylegia/Coding-Projects/sports
 
 ### A11 · P2 · Non-JSON API failures expose a parser error instead of a useful message
 
-Source: [frontend/src/lib/admin-api.ts:14](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/lib/admin-api.ts:14)
+Source: [frontend/src/lib/admin-api.ts:14](../../frontend/src/lib/admin-api.ts:14)
 
 **Evidence / reproduction:** Browser reproduced with a 502 HTML gateway response: the user sees “Unexpected token < … is not valid JSON.” The client parses JSON before checking status or content type, and discards structured status/code information.
 
@@ -106,7 +108,7 @@ Source: [frontend/src/lib/admin-api.ts:14](/Users/huylegia/Coding-Projects/sport
 
 ### A12 · P2 · A successful mutation can be presented as a failed operation
 
-Source: [frontend/src/pages/Admin.tsx:160](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:160)
+Source: [frontend/src/pages/Admin.tsx:160](../../frontend/src/pages/Admin.tsx:160)
 
 **Evidence / reproduction:** Browser reproduced: PUT player succeeds, then audit refresh fails. The editor is already reset, no “Player saved” message appears, and the UI reports only “Audit service unavailable.” The same mutation-plus-refresh pattern is reused for pools and imports.
 
@@ -114,7 +116,7 @@ Source: [frontend/src/pages/Admin.tsx:160](/Users/huylegia/Coding-Projects/sport
 
 ### A13 · P2 · Player editor cannot assign NBA teams or provider IDs
 
-Source: [frontend/src/pages/Admin.tsx:28](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:28)
+Source: [frontend/src/pages/Admin.tsx:28](../../frontend/src/pages/Admin.tsx:28)
 
 **Evidence / reproduction:** Source and browser confirmed: nba_team_id and external_ids exist in the editable API model, but no controls render. New players always submit null and an empty mapping. The editor can preserve existing values, but cannot create or correct them.
 
@@ -122,7 +124,7 @@ Source: [frontend/src/pages/Admin.tsx:28](/Users/huylegia/Coding-Projects/sports
 
 ### A14 · P2 · Career imports lack a complete UI preparation and inspection workflow
 
-Source: [frontend/src/pages/Admin.tsx:371](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:371)
+Source: [frontend/src/pages/Admin.tsx:371](../../frontend/src/pages/Admin.tsx:371)
 
 **Evidence / reproduction:** Source confirmed workflow gap: imports require player UUIDs and structured season totals, but the catalog/editor does not expose a copyable player ID, a schema/example download, or a career-history viewer. Backend history endpoints and import examples exist, but are not accessible from this screen.
 
@@ -130,7 +132,7 @@ Source: [frontend/src/pages/Admin.tsx:371](/Users/huylegia/Coding-Projects/sport
 
 ### A15 · P2 · Published pools still look editable in the catalog
 
-Source: [frontend/src/pages/Admin.tsx:475](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Admin.tsx:475)
+Source: [frontend/src/pages/Admin.tsx:475](../../frontend/src/pages/Admin.tsx:475)
 
 **Evidence / reproduction:** Browser reproduced: select a published pool, then check a different player. The checkbox changes and selection count changes, while Save/Publish remain disabled. The screen therefore shows an apparent edited published selection that can never be saved.
 
@@ -138,7 +140,7 @@ Source: [frontend/src/pages/Admin.tsx:475](/Users/huylegia/Coding-Projects/sport
 
 ### A16 · P2 · Joining an already-owned local league duplicates the user and removes creator access
 
-Source: [frontend/src/state/store.ts:128](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/state/store.ts:128)
+Source: [frontend/src/state/store.ts:128](../../frontend/src/state/store.ts:128)
 
 **Evidence / reproduction:** Browser reproduced by joining OFFICE with a new team name. The original creator is changed from “you” to “host-office” and marked as a guest; another Sam Taylor joins as “you.” The local user can no longer start their own league. Rejoining can introduce further duplicate identities.
 
@@ -146,7 +148,7 @@ Source: [frontend/src/state/store.ts:128](/Users/huylegia/Coding-Projects/sports
 
 ### A17 · P2 · Invalid hidden FPL data resets otherwise valid NBA leagues
 
-Source: [frontend/src/state/store.ts:19](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/state/store.ts:19)
+Source: [frontend/src/state/store.ts:19](../../frontend/src/state/store.ts:19)
 
 **Evidence / reproduction:** Browser reproduced with a valid saved NBA league and an invalid old FPL squad. Although FPL_ENABLED is false, validation rejects the entire AppState and the UI replaces the saved league with sample leagues. The fallback can later overwrite the saved object on the next mutation.
 
@@ -154,7 +156,7 @@ Source: [frontend/src/state/store.ts:19](/Users/huylegia/Coding-Projects/sports-
 
 ### A18 · P2 · Settings claims persistence succeeded when storage is unavailable
 
-Source: [frontend/src/pages/Settings.tsx:32](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Settings.tsx:32)
+Source: [frontend/src/pages/Settings.tsx:32](../../frontend/src/pages/Settings.tsx:32)
 
 **Evidence / reproduction:** Browser reproduced with blocked localStorage: the banner says changes last only for this visit, while Save preferences says “Profile saved in this browser.” Persistence failures are swallowed by update(), which returns no outcome to callers.
 
@@ -162,7 +164,7 @@ Source: [frontend/src/pages/Settings.tsx:32](/Users/huylegia/Coding-Projects/spo
 
 ### A19 · P2 · Recap card names push metadata and badges out of alignment
 
-Source: [frontend/src/pages/Draft.tsx:716](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Draft.tsx:716)
+Source: [frontend/src/pages/Draft.tsx:716](../../frontend/src/pages/Draft.tsx:716)
 
 **Evidence / reproduction:** Browser reproduced at 1920px: Giannis’s name occupies 78.375px versus 39.1875px for neighboring names. His team/position row is consequently 39.1875px lower. Cards have no reserved name region or aligned metadata/footer rows. This matches the supplied screenshot.
 
@@ -170,7 +172,7 @@ Source: [frontend/src/pages/Draft.tsx:716](/Users/huylegia/Coding-Projects/sport
 
 ### A20 · P2 · Initials fallbacks collapse the portrait region in recap cards
 
-Source: [frontend/src/components/ui.tsx:63](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/components/ui.tsx:63)
+Source: [frontend/src/components/ui.tsx:63](../../frontend/src/components/ui.tsx:63)
 
 **Evidence / reproduction:** Browser reproduced in a completed six-manager draft: ordinary portraits are about 116.9px high in recap cards, but Victor Wembanyama’s initials fallback is only 44px high. His name starts roughly 72.9px above neighboring names.
 
@@ -178,7 +180,7 @@ Source: [frontend/src/components/ui.tsx:63](/Users/huylegia/Coding-Projects/spor
 
 ### A21 · P3 · League card actions do not align when titles wrap
 
-Source: [frontend/src/pages/Leagues.tsx:87](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Leagues.tsx:87)
+Source: [frontend/src/pages/Leagues.tsx:87](../../frontend/src/pages/Leagues.tsx:87)
 
 **Evidence / reproduction:** Browser reproduced at 1110px with a valid multi-line league title: first card action starts about 330px from its card top, while Office Hoops starts about 285px down. Equal outer card height does not align the buttons.
 
@@ -186,7 +188,7 @@ Source: [frontend/src/pages/Leagues.tsx:87](/Users/huylegia/Coding-Projects/spor
 
 ### A22 · P2 · Valid long user-entered names break responsive layouts
 
-Source: [frontend/src/components/Shell.tsx:64](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/components/Shell.tsx:64)
+Source: [frontend/src/components/Shell.tsx:64](../../frontend/src/components/Shell.tsx:64)
 
 **Evidence / reproduction:** Browser reproduced with names within existing 40-character profile/league and 30-character team limits. At 375px, Home overflowed by 542px and Lobby by 236px. At 1440px, a long profile name also pushed the header past the viewport. Default short fixtures pass all width checks.
 
@@ -194,7 +196,7 @@ Source: [frontend/src/components/Shell.tsx:64](/Users/huylegia/Coding-Projects/s
 
 ### A23 · P3 · Portrait jerseys and team labels can describe different contexts
 
-Source: [frontend/src/state/players.json:1](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/state/players.json:1)
+Source: [frontend/src/state/players.json:1](../../frontend/src/state/players.json:1)
 
 **Evidence / reproduction:** The supplied screenshot shows a Clippers jersey alongside CLE for Donovan Mitchell. Local image credits use the NBA latest-headshot URL, while the catalog retains sample affiliations/statistics; the recap does not display the same season-context disclaimer as the draft table. This is a data-presentation inconsistency, not a claim about current real affiliations.
 
@@ -202,7 +204,7 @@ Source: [frontend/src/state/players.json:1](/Users/huylegia/Coding-Projects/spor
 
 ### A24 · P2 · Browser Back can return to the root URL while leaving Home displayed
 
-Source: [frontend/src/state/router.ts:3](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/state/router.ts:3)
+Source: [frontend/src/state/router.ts:3](../../frontend/src/state/router.ts:3)
 
 **Evidence / reproduction:** Browser reproduced: load the application with no hash, click Open app, then press Back. The URL returns to the initial empty hash, but h1 remains “Your home court.” readPath substitutes the last navigated fallbackPath for the legitimate empty hash.
 
@@ -210,7 +212,7 @@ Source: [frontend/src/state/router.ts:3](/Users/huylegia/Coding-Projects/sports-
 
 ### A25 · P2 · Landing demo actions break after local leagues are cleared
 
-Source: [frontend/src/pages/Landing.tsx:123](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Landing.tsx:123)
+Source: [frontend/src/pages/Landing.tsx:123](../../frontend/src/pages/Landing.tsx:123)
 
 **Evidence / reproduction:** Browser reproduced: clear leagues, open the landing, then Explore the draft. It still targets the fixed sunday ID and ends at the unavailable-page screen. The ticket and draft-preview entry use the same fixed link.
 
@@ -218,7 +220,7 @@ Source: [frontend/src/pages/Landing.tsx:123](/Users/huylegia/Coding-Projects/spo
 
 ### A26 · P2 · Admin and recovery routes have incomplete titles and heading focus
 
-Source: [frontend/src/App.tsx:38](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/App.tsx:38)
+Source: [frontend/src/App.tsx:38](../../frontend/src/App.tsx:38)
 
 **Evidence / reproduction:** Browser confirmed admin title is “Your home court · Sports Fanatics.” Unknown routes also use that title, and their EmptyState renders only h2, which axe flags for missing h1. Heading focus runs once per path and does not wait for lazy Admin content to resolve.
 
@@ -226,7 +228,7 @@ Source: [frontend/src/App.tsx:38](/Users/huylegia/Coding-Projects/sports-fanatic
 
 ### A27 · P2 · Clicks on dialog padding unexpectedly close the dialog
 
-Source: [frontend/src/components/ui.tsx:131](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/components/ui.tsx:131)
+Source: [frontend/src/components/ui.tsx:131](../../frontend/src/components/ui.tsx:131)
 
 **Evidence / reproduction:** Browser reproduced by opening Add a local guest team and clicking five pixels inside the dialog’s side padding. Because the click target is the dialog itself, the handler closes it as if the backdrop had been clicked.
 
@@ -234,7 +236,7 @@ Source: [frontend/src/components/ui.tsx:131](/Users/huylegia/Coding-Projects/spo
 
 ### A28 · P2 · Mobile navigation does not contain keyboard focus or close on Escape
 
-Source: [frontend/src/components/Shell.tsx:39](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/components/Shell.tsx:39)
+Source: [frontend/src/components/Shell.tsx:39](../../frontend/src/components/Shell.tsx:39)
 
 **Evidence / reproduction:** Browser reproduced at 375px: Escape leaves the full-screen menu open; Tab after its profile button moves focus into the obscured page. The overlay neither traps focus nor makes the page behind it inert.
 
@@ -242,7 +244,7 @@ Source: [frontend/src/components/Shell.tsx:39](/Users/huylegia/Coding-Projects/s
 
 ### A29 · P2 · Selecting a player on mobile leaves the draft action offscreen
 
-Source: [frontend/src/pages/Draft.tsx:388](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Draft.tsx:388)
+Source: [frontend/src/pages/Draft.tsx:388](../../frontend/src/pages/Draft.tsx:388)
 
 **Evidence / reproduction:** Browser reproduced at 375px: click Stephen Curry in the player list. His detail panel updates above the list, but the “Draft Stephen” action ends around 108px above the viewport, so no drafting action is visible where selection occurred.
 
@@ -250,7 +252,7 @@ Source: [frontend/src/pages/Draft.tsx:388](/Users/huylegia/Coding-Projects/sport
 
 ### A30 · P2 · Draft detail stays on an unavailable player and misstates ownership
 
-Source: [frontend/src/pages/Draft.tsx:44](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Draft.tsx:44)
+Source: [frontend/src/pages/Draft.tsx:44](../../frontend/src/pages/Draft.tsx:44)
 
 **Evidence / reproduction:** Browser reproduced: draft Shai at the first Sunday League turn. The next snake pick is also yours, but the detail panel remains on Shai with “Already drafted” and “This player belongs to another roster in this league,” even though he is on your own roster. Re-entering the draft always selects Shai again.
 
@@ -258,7 +260,7 @@ Source: [frontend/src/pages/Draft.tsx:44](/Users/huylegia/Coding-Projects/sports
 
 ### A31 · P2 · Player search fails ordinary unaccented spelling
 
-Source: [frontend/src/pages/Draft.tsx:87](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Draft.tsx:87)
+Source: [frontend/src/pages/Draft.tsx:87](../../frontend/src/pages/Draft.tsx:87)
 
 **Evidence / reproduction:** Confirmed by running the exact search predicate on the current player data: Jokic, Doncic, and Sengun each return no matches despite Jokić, Dončić, and Şengün being present. Only lowercase normalization is applied.
 
@@ -266,7 +268,7 @@ Source: [frontend/src/pages/Draft.tsx:87](/Users/huylegia/Coding-Projects/sports
 
 ### A32 · P2 · Visible stat sort labels do not match their accessible names
 
-Source: [frontend/src/pages/Draft.tsx:366](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Draft.tsx:366)
+Source: [frontend/src/pages/Draft.tsx:366](../../frontend/src/pages/Draft.tsx:366)
 
 **Evidence / reproduction:** Axe confirmed label-content-name-mismatch on PTS/REB/AST buttons: the visible strings are replaced by accessible names “Sort by points/rebounds/assists” that omit those labels. This makes voice activation by the visible label unreliable.
 
@@ -274,7 +276,7 @@ Source: [frontend/src/pages/Draft.tsx:366](/Users/huylegia/Coding-Projects/sport
 
 ### A33 · P2 · Repeated complementary landmarks have no distinguishing labels
 
-Source: [frontend/src/components/Shell.tsx:39](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/components/Shell.tsx:39)
+Source: [frontend/src/components/Shell.tsx:39](../../frontend/src/components/Shell.tsx:39)
 
 **Evidence / reproduction:** Axe confirmed landmark-unique on create, join, lobby, and draft pages. The global sidebar and the page-specific aside both expose unnamed complementary landmarks.
 
@@ -282,7 +284,7 @@ Source: [frontend/src/components/Shell.tsx:39](/Users/huylegia/Coding-Projects/s
 
 ### A34 · P2 · Draft tabs and player statistics lack complete semantic relationships
 
-Source: [frontend/src/pages/Draft.tsx:185](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/pages/Draft.tsx:185)
+Source: [frontend/src/pages/Draft.tsx:185](../../frontend/src/pages/Draft.tsx:185)
 
 **Evidence / reproduction:** Source confirmed: mobile buttons expose role=tab but have no aria-controls/tabpanel relationships. The statistical “table” is nested divs without table/grid semantics, so column labels are not programmatically associated with each player’s values. Keyboard arrow movement exists, but does not supply those relationships.
 
@@ -290,7 +292,7 @@ Source: [frontend/src/pages/Draft.tsx:185](/Users/huylegia/Coding-Projects/sport
 
 ### A35 · P3 · Some miniature landing labels are too small and have insufficient contrast
 
-Source: [frontend/src/styles/reference.css:1](/Users/huylegia/Coding-Projects/sports-fanatics/frontend/src/styles/reference.css:1)
+Source: [frontend/src/styles/reference.css:1](../../frontend/src/styles/reference.css:1)
 
 **Evidence / reproduction:** Axe found the YOU ticket avatar at 6px with contrast 4.34:1 in the tested desktop state, below 4.5:1 for normal text. Several miniature preview labels also use the reference’s tiny typography.
 
@@ -304,7 +306,7 @@ The repository explicitly documents that only administration is connected to the
 2. Frontend league settings offer 3/4/5 flexible players. The current backend contract uses 10 players, two from each tier, and starter/bench position assignments. The frontend does not expose pool selection, tiers, legal-pick feasibility, lineup editing, or the paused state.
 3. Frontend types use numeric player IDs, a single position string, a `remaining` counter, and local participant IDs. The backend uses player and pool-player UUIDs, multiple eligible positions, server deadlines/revisions, and authenticated SSE event replay. These need explicit API models/adapters; connecting only the existing buttons would not be sufficient.
 
-See [backend integration contract](/Users/huylegia/Coding-Projects/sports-fanatics/docs/backend/INTEGRATION.md). FPL is intentionally disabled; its visibility is not a bug, and the audit does not recommend enabling it as part of repairs.
+See [backend integration contract](../../docs/backend/INTEGRATION.md). FPL is intentionally disabled; its visibility is not a bug, and the audit does not recommend enabling it as part of repairs.
 
 ## Recommended repair sequence
 

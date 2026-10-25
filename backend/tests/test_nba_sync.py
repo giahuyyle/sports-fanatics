@@ -15,7 +15,7 @@ from app.db.catalog import (
     SeasonStats,
 )
 from app.jobs.nba_sync import sync_nba
-from app.providers.nba import NBADataError
+from app.providers.nba import NBADataError, NBAUnavailableError
 
 
 class SyntheticClient:
@@ -108,7 +108,7 @@ def test_partial_batches_keep_successes_and_stop_repeated_failures(db_app):
         def career(self, player):
             self.attempted.append(player.nba_id)
             if player.nba_id != 100:
-                raise NBADataError("Synthetic upstream timeout")
+                raise NBAUnavailableError("Synthetic upstream timeout")
             return super().career(player)
 
     provider = UnavailableClient()
@@ -117,8 +117,10 @@ def test_partial_batches_keep_successes_and_stop_repeated_failures(db_app):
     )
     assert result["status"] == "partial" and result["synced"] == 1
     assert provider.attempted == [100, 101, 102, 103]
+    assert result["pending_histories"] == 3 and result["catalogued"] == 4
+    assert result["unattempted"] == 1
     with Session(app.state.engine) as session:
-        assert session.scalar(select(func.count()).select_from(Player)) == 1
+        assert session.scalar(select(func.count()).select_from(Player)) == 4
         assert (
             session.get(ImportRun, UUID(result["id"])).row_count == result["row_count"]
         )
@@ -181,3 +183,82 @@ def test_upstream_failure_preserves_previously_imported_history(db_app):
         assert set(session.scalars(select(SeasonStats.import_run_id))) == {
             UUID(first["id"])
         }
+
+
+def test_empty_careers_keep_identities_with_incomplete_coverage(db_app):
+    app, _ = db_app
+
+    class EmptyClient(SyntheticClient):
+        def career(self, player):
+            return []
+
+    result = sync_nba(
+        app.state.engine, "admin", EmptyClient(), player_ids=[100, 101, 102, 103]
+    )
+    assert result["status"] == "complete" and result["synced"] == 4
+    assert result["attempted"] == 4 and result["unattempted"] == 0
+    assert result["incomplete_histories"] == 4
+    with Session(app.state.engine) as session:
+        rows = session.scalars(select(Player)).all()
+        assert len(rows) == 4
+        assert all(p.archived and not p.no_appearances for p in rows)
+        assert session.scalar(select(func.count()).select_from(SeasonStats)) == 0
+
+
+def test_validation_errors_do_not_stop_later_players(db_app):
+    app, _ = db_app
+
+    class InvalidClient(SyntheticClient):
+        def career(self, player):
+            if player.nba_id < 103:
+                raise NBADataError("Invalid source record")
+            return super().career(player)
+
+    result = sync_nba(
+        app.state.engine, "admin", InvalidClient(), player_ids=[100, 101, 102, 103]
+    )
+    assert result["status"] == "partial" and result["synced"] == 1
+    assert result["attempted"] == 4 and result["unattempted"] == 0
+
+
+def test_empty_response_cannot_erase_existing_appearance_history(db_app):
+    app, _ = db_app
+    first = sync_nba(app.state.engine, "admin", SyntheticClient(), player_ids=[100])
+
+    class EmptyClient(SyntheticClient):
+        def career(self, player):
+            return []
+
+    result = sync_nba(app.state.engine, "admin", EmptyClient(), player_ids=[100])
+    assert result["status"] == "failed"
+    with Session(app.state.engine) as session:
+        assert (
+            session.scalar(select(func.count()).select_from(SeasonStats))
+            == first["row_count"]
+        )
+        assert not session.scalar(select(Player)).no_appearances
+
+
+def test_new_identity_survives_unavailable_career_without_claiming_zero_games(db_app):
+    from app.domain.catalog import coverage, current_season
+    from app.providers.nba import NBAPlayer
+
+    app, _ = db_app
+
+    class UnavailableRookie(SyntheticClient):
+        def player(self, nba_id):
+            return NBAPlayer(
+                nba_id, "Pending rookie", current_season(), None, None, False
+            )
+
+        def career(self, player):
+            raise NBAUnavailableError("Synthetic malformed career response")
+
+    result = sync_nba(app.state.engine, "admin", UnavailableRookie(), player_ids=[100])
+    assert result["status"] == "failed" and result["catalogued"] == 1
+    assert result["pending_histories"] == 1
+    with Session(app.state.engine) as session:
+        player = session.scalar(select(Player))
+        assert player.archived and not player.no_appearances
+        assert not coverage(session, player)["complete"]
+        assert session.scalar(select(func.count()).select_from(SeasonStats)) == 0

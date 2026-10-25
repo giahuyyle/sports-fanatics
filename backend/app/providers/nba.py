@@ -39,6 +39,10 @@ class NBADataError(ValueError):
     pass
 
 
+class NBAUnavailableError(NBADataError):
+    """A failed upstream request, distinct from an invalid player record."""
+
+
 @dataclass(frozen=True)
 class NBAPlayer:
     nba_id: int
@@ -139,9 +143,6 @@ def season_rows(player, regular, playoffs):
                     "Traded-player season is missing its aggregate total"
                 )
             result.append(NBASeason(year, phase, "TOTAL", rows[0].totals))
-    if not regular:
-        if player.rookie_season != current_season() or player.games_played:
-            raise NBADataError("Career regular-season history is unexpectedly empty")
     return result
 
 
@@ -157,10 +158,10 @@ class NBAClient:
             self.last_request = time.monotonic()
             try:
                 return factory(timeout=self.timeout, **parameters)
-            except (RequestException, ValueError) as error:
+            except (RequestException, ValueError, KeyError) as error:
                 # JSON decode errors can represent a transient NBA HTML error response.
                 if attempt == self.retries:
-                    raise NBADataError(
+                    raise NBAUnavailableError(
                         f"NBA endpoint unavailable after {attempt + 1} attempts "
                         f"({type(error).__name__})"
                     ) from error

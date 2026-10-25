@@ -144,3 +144,66 @@ test('ordinary Firebase users cannot open admin tools', async ({ page, request }
   })
   expect(denied.status()).toBe(403)
 })
+
+test('catalog pages reach every player and retain selections across searches', async ({
+  page,
+  request,
+}) => {
+  test.skip(!connected, 'Requires local Firebase Auth emulator and PostgreSQL API')
+  test.setTimeout(90_000)
+  const email = process.env.ADMIN_TEST_EMAIL!
+  const password = process.env.ADMIN_TEST_PASSWORD!
+  const login = await request.post(
+    `${authURL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-key`,
+    {
+      data: { email, password, returnSecureToken: true },
+    },
+  )
+  const token = (await login.json()).idToken
+  const prefix = `ZZ catalog ${Date.now()}`
+  const year = new Date().getUTCFullYear() - (new Date().getUTCMonth() < 6 ? 1 : 0)
+  for (let start = 0; start < 205; start += 5) {
+    const results = await Promise.all(
+      Array.from({ length: Math.min(5, 205 - start) }, (_, i) =>
+        request.post(`${process.env.ADMIN_TEST_API}/api/v1/admin/players`, {
+          headers: { Authorization: `Bearer ${token}` },
+          data: {
+            name: `${prefix} ${String(start + i).padStart(3, '0')}`,
+            rookie_season: year,
+            no_appearances: true,
+            tier: 1,
+            priority: 1,
+            positions: ['PG'],
+          },
+        }),
+      ),
+    )
+    for (const result of results) expect(result.status()).toBe(201)
+  }
+  await page.goto('/#/admin')
+  await page.getByLabel('Email', { exact: true }).fill(email)
+  await page.getByLabel('Password', { exact: true }).fill(password)
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Player catalog' })).toBeVisible()
+  await page.getByLabel('Search players', { exact: true }).fill(prefix)
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Showing' })).toContainText('1–50 of 205')
+  await page.getByRole('checkbox', { name: `Select ${prefix} 000`, exact: true }).check()
+  for (const range of ['51–100', '101–150', '151–200', '201–205']) {
+    await page.getByRole('button', { name: 'Next players', exact: true }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Showing' })).toContainText(
+      `${range} of 205`,
+    )
+  }
+  await expect(page.getByRole('row').filter({ hasText: `${prefix} 204` })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next players' })).toBeDisabled()
+  await page.getByLabel('Search players', { exact: true }).fill(`${prefix} 204`)
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Showing' })).toContainText('1–1 of 1')
+  await expect(page.getByRole('button', { name: 'Previous players' })).toBeDisabled()
+  await page.getByLabel('Search players', { exact: true }).fill(prefix)
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await expect(
+    page.getByRole('checkbox', { name: `Select ${prefix} 000`, exact: true }),
+  ).toBeChecked()
+})

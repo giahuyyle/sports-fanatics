@@ -53,3 +53,10 @@ export interface AuditRecord {
   target: string
   created_at: string
 }
+
+export interface AdminPlayerPage {
+  items: AdminPlayer[]
+  total: number
+  offset: number
+  limit: number
+}

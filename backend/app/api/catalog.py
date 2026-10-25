@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 from pydantic import Field, ValidationError, model_validator
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 
 from app.auth import AdminDep, SessionDep, UserDep
 from app.db.catalog import (
@@ -132,6 +132,31 @@ def players(
         statement.order_by(Player.priority, Player.id).offset(offset).limit(limit)
     )
     return [player_view(session, p) for p in rows]
+
+
+@router.get("/admin/players")
+def admin_players(
+    user: AdminDep,
+    session: SessionDep,
+    search: str = "",
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+):
+    statement = select(Player)
+    if search:
+        statement = statement.where(Player.name.icontains(search, autoescape=True))
+    total = session.scalar(select(func.count()).select_from(statement.subquery()))
+    rows = session.scalars(
+        statement.order_by(func.lower(Player.name), Player.id)
+        .offset(offset)
+        .limit(limit)
+    ).all()
+    return {
+        "items": [player_view(session, p) for p in rows],
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+    }
 
 
 @router.get("/players/{player_id}")

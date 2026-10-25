@@ -88,8 +88,7 @@ def test_invalid_upstream_rows_are_rejected(changes):
 def test_missing_aggregate_and_missing_career_are_not_zero_filled():
     with pytest.raises(NBADataError, match="aggregate"):
         season_rows(metadata(), [stat_row(), stat_row(code="BBB", team_id=8)], [])
-    with pytest.raises(NBADataError, match="unexpectedly empty"):
-        season_rows(metadata(), [], [])
+    assert season_rows(metadata(), [], []) == []
     rookie = NBAPlayer(200, "Synthetic Rookie", current_season(), None, None, False)
     assert season_rows(rookie, [], []) == []
     # A missing intervening season stays missing for coverage reporting.

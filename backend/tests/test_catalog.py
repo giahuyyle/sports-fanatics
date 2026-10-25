@@ -178,3 +178,54 @@ def test_csv_and_career_gap_validation(db_app):
         ).status_code
         == 422
     )
+
+
+def test_admin_catalog_pages_include_all_records_and_search(db_app):
+    from app.db.catalog import Player
+
+    app, client = db_app
+    with Session(app.state.engine) as session:
+        session.add_all(
+            [
+                Player(
+                    name=f"Catalog Player {i:03d}",
+                    rookie_season=current_season(),
+                    no_appearances=True,
+                    tier=5,
+                    priority=1000000,
+                    archived=True,
+                )
+                for i in range(205)
+            ]
+        )
+        session.add_all(
+            [
+                Player(
+                    name=name,
+                    rookie_season=current_season(),
+                    no_appearances=True,
+                    tier=5,
+                    priority=1000000,
+                    archived=True,
+                )
+                for name in ("LeBron James", "Stephen Curry")
+            ]
+        )
+        session.commit()
+    assert (
+        client.get("/api/v1/admin/players", headers=headers("ordinary")).status_code
+        == 403
+    )
+    seen = set()
+    for offset in range(0, 207, 50):
+        result = client.get(
+            f"/api/v1/admin/players?offset={offset}&limit=50", headers=headers()
+        ).json()
+        assert result["total"] == 207 and result["offset"] == offset
+        ids = {p["id"] for p in result["items"]}
+        assert not ids & seen
+        seen.update(ids)
+    assert len(seen) == 207
+    result = client.get("/api/v1/admin/players?search=Curry", headers=headers()).json()
+    assert result["total"] == 1 and result["items"][0]["name"] == "Stephen Curry"
+    assert client.get("/api/v1/players", headers=headers()).json() == []

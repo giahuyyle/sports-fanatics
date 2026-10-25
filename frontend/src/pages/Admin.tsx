@@ -11,9 +11,17 @@ import type { User } from 'firebase/auth'
 import { PageTitle } from '../components/ui'
 import { adminAuth } from '../lib/firebase'
 import { adminApi } from '../lib/admin-api'
-import type { AdminPlayer, AuditRecord, ImportReport, Pool, Position } from '../lib/admin-api'
+import type {
+  AdminPlayer,
+  AdminPlayerPage,
+  AuditRecord,
+  ImportReport,
+  Pool,
+  Position,
+} from '../lib/admin-api'
 import '../styles/admin.css'
 
+const PAGE_SIZE = 50
 const positions: Position[] = ['PG', 'SG', 'SF', 'PF', 'C']
 const season = new Date().getUTCFullYear() - (new Date().getUTCMonth() < 6 ? 1 : 0)
 const emptyPlayer = () => ({
@@ -39,6 +47,9 @@ export default function Admin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [search, setSearch] = useState('')
+  const [appliedSearch, setAppliedSearch] = useState('')
+  const [offset, setOffset] = useState(0)
+  const [total, setTotal] = useState(0)
   const [players, setPlayers] = useState<AdminPlayer[]>([])
   const [editing, setEditing] = useState<string | null>(null)
   const [form, setForm] = useState<PlayerForm>(emptyPlayer)
@@ -59,6 +70,10 @@ export default function Admin() {
       setAllowed(false)
       setReady(true)
       setPlayers([])
+      setOffset(0)
+      setTotal(0)
+      setSearch('')
+      setAppliedSearch('')
       setPools([])
       setReports([])
       setAudit([])
@@ -89,14 +104,15 @@ export default function Admin() {
     if (!allowed) return
     let active = true
     Promise.all([
-      adminApi<AdminPlayer[]>('/players?include_archived=true&limit=200'),
+      adminApi<AdminPlayerPage>(`/admin/players?limit=${PAGE_SIZE}`),
       adminApi<Pool[]>('/pools'),
       adminApi<ImportReport[]>('/admin/imports'),
       adminApi<AuditRecord[]>('/admin/audit'),
     ])
       .then(([p, pools, reports, audit]) => {
         if (active) {
-          setPlayers(p)
+          setPlayers(p.items)
+          setTotal(p.total)
           setPools(pools)
           setReports(reports)
           setAudit(audit)
@@ -110,16 +126,19 @@ export default function Admin() {
     }
   }, [allowed])
 
-  async function refresh() {
+  async function refresh(nextOffset = offset, query = appliedSearch) {
     const [p, poolRows, imports, auditRows] = await Promise.all([
-      adminApi<AdminPlayer[]>(
-        `/players?include_archived=true&limit=200&search=${encodeURIComponent(search)}`,
+      adminApi<AdminPlayerPage>(
+        `/admin/players?limit=${PAGE_SIZE}&offset=${nextOffset}&search=${encodeURIComponent(query)}`,
       ),
       adminApi<Pool[]>('/pools'),
       adminApi<ImportReport[]>('/admin/imports'),
       adminApi<AuditRecord[]>('/admin/audit'),
     ])
-    setPlayers(p)
+    setPlayers(p.items)
+    setOffset(p.offset)
+    setTotal(p.total)
+    setAppliedSearch(query)
     setPools(poolRows)
     setReports(imports)
     setAudit(auditRows)
@@ -440,7 +459,7 @@ export default function Admin() {
                   className="admin-search"
                   onSubmit={(e) => {
                     e.preventDefault()
-                    void run(refresh)
+                    void run(() => refresh(0, search))
                   }}
                 >
                   <label className="field-label">
@@ -452,8 +471,17 @@ export default function Admin() {
                   </button>
                 </form>
                 <p>
-                  Select players across searches to configure a draft pool. {selected.length}{' '}
-                  selected. Results show up to 200 players.
+                  Select players across pages and searches to configure a draft pool.{' '}
+                  {selected.length} selected.
+                </p>
+                <p>
+                  Archived players are kept for reference and excluded from new draft pools.
+                  Imported players start archived until you assign their tiers and eligible
+                  positions.
+                </p>
+                <p role="status" aria-live="polite">
+                  Showing {total ? offset + 1 : 0}–{Math.min(offset + players.length, total)} of{' '}
+                  {total} players.
                 </p>
                 <div className="admin-table-wrap">
                   <table className="admin-table">
@@ -509,7 +537,25 @@ export default function Admin() {
                     </tbody>
                   </table>
                 </div>
-                {players.length === 0 && <p>No players found. Add a player above.</p>}
+                {players.length === 0 && (
+                  <p>No players found. Try another search or add a player above.</p>
+                )}
+                <nav className="action-row" aria-label="Player catalog pages">
+                  <button
+                    className="secondary-button"
+                    disabled={busy || offset === 0}
+                    onClick={() => void run(() => refresh(Math.max(0, offset - PAGE_SIZE)))}
+                  >
+                    Previous players
+                  </button>
+                  <button
+                    className="secondary-button"
+                    disabled={busy || offset + PAGE_SIZE >= total}
+                    onClick={() => void run(() => refresh(offset + PAGE_SIZE))}
+                  >
+                    Next players
+                  </button>
+                </nav>
               </section>
               <section className="panel">
                 <h2>Versioned player pools</h2>

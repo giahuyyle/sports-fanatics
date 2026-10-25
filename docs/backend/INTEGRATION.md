@@ -97,6 +97,18 @@ Snapshots and streams require league membership. Pause reasons are visible in th
 snapshot. Only a platform admin can call `/admin/leagues/{id}/resume`, which first
 revalidates feasibility; league owners cannot bypass roster constraints.
 
+## Admin catalog pagination
+
+`GET /admin/players?search=&offset=0&limit=50` returns
+`{items, total, offset, limit}` with all archive states included. Results are
+ordered by name and player ID. The dashboard retains pool selections across
+pages and searches. The existing public `/players` array contract is unchanged.
+
+Archived players remain in the catalog and in historical drafts. They are excluded
+from new draft pools; newly synced players are archived pending manual tier and
+position review. Archiving is an administrative availability choice, not a claim
+that the NBA player retired or that their career history is missing.
+
 ## Admin mutation contracts
 
 Create/update players with `POST /admin/players` and `PUT /admin/players/{id}`.

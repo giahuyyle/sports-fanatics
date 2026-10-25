@@ -4,11 +4,11 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.db.catalog import ExternalPlayerID, ImportRun, NBATeam, Player
+from app.db.catalog import ExternalPlayerID, ImportRun, NBATeam, Player, SeasonStats
 from app.db.identity import User
-from app.domain.catalog import audit, coverage, upsert_stat_rows
+from app.domain.catalog import audit, coverage, current_season, upsert_stat_rows
 from app.observability import record
-from app.providers.nba import NBADataError, team_names
+from app.providers.nba import NBADataError, NBAUnavailableError, team_names
 from app.schemas.stats import StatRow
 
 
@@ -27,7 +27,9 @@ def nba_team(session, code, names, fallback=None):
     return team
 
 
-def persist_player(session, metadata, seasons, actor_id, run_id):
+def persist_player(
+    session, metadata, seasons, actor_id, run_id, *, history_available=True
+):
     # Serialize competing provider jobs by NBA identity, including first insertion.
     session.execute(
         text("SELECT pg_advisory_xact_lock(658201, :nba_id)"),
@@ -39,6 +41,8 @@ def persist_player(session, metadata, seasons, actor_id, run_id):
             ExternalPlayerID.external_id == str(metadata.nba_id),
         )
     )
+    if mapping and not history_available:
+        return None  # A request outage must not modify an existing catalog record.
     if mapping:
         player = session.scalar(
             select(Player).where(Player.id == mapping.player_id).with_for_update()
@@ -74,10 +78,26 @@ def persist_player(session, metadata, seasons, actor_id, run_id):
                 player_id=player.id, provider="nba", external_id=str(metadata.nba_id)
             )
         )
+    if not any(s.phase == "regular" for s in seasons):
+        existing_games = session.scalars(
+            select(SeasonStats.totals).where(
+                SeasonStats.player_id == player.id,
+                SeasonStats.phase == "regular",
+                SeasonStats.scope == "TOTAL",
+            )
+        ).all()
+        if any(totals["games"] for totals in existing_games):
+            raise NBADataError(
+                "Upstream returned empty history for a player with stored NBA "
+                "appearances; preserved existing data."
+            )
     player.name = metadata.name
     player.rookie_season = metadata.rookie_season
-    player.no_appearances = not any(
-        s.totals.games for s in seasons if s.phase == "regular"
+    player.no_appearances = (
+        history_available
+        and metadata.rookie_season == current_season()
+        and not metadata.games_played
+        and not any(s.totals.games for s in seasons if s.phase == "regular")
     )
     names = team_names()
     current_team = nba_team(session, metadata.team_code, names, metadata.team_name)
@@ -103,7 +123,12 @@ def persist_player(session, metadata, seasons, actor_id, run_id):
         user,
         "nba.sync_player",
         player.id,
-        {"nba_id": metadata.nba_id, "import_run_id": str(run_id), "rows": len(rows)},
+        {
+            "nba_id": metadata.nba_id,
+            "import_run_id": str(run_id),
+            "rows": len(rows),
+            "history_available": history_available,
+        },
     )
     return {
         "nba_id": metadata.nba_id,
@@ -142,6 +167,7 @@ def sync_nba(
         session.flush()
         run_id = run.id
     synced, row_count, errors, consecutive = 0, 0, [], 0
+    selected_count, attempted, incomplete, pending = 0, 0, 0, 0
     try:
         selected = (
             client.active_players() if active else list(dict.fromkeys(player_ids))
@@ -149,8 +175,11 @@ def sync_nba(
         selected = selected[offset : offset + limit if limit is not None else None]
         if not selected:
             raise NBADataError("No players selected. Check IDs, offset and limit.")
+        selected_count = len(selected)
         for item in selected:
+            attempted += 1
             nba_id = item.nba_id if active else item
+            metadata = None
             try:
                 metadata = item if active else client.player(nba_id)
                 seasons = client.career(metadata)
@@ -162,26 +191,45 @@ def sync_nba(
                 synced += 1
                 row_count += result["rows"]
                 consecutive = 0
+                incomplete += not result["coverage"]["complete"]
                 if on_progress:
                     on_progress({"status": "synced", **result})
             except (ValueError, KeyError, TypeError) as exc:
-                consecutive += 1
+                consecutive = (
+                    consecutive + 1 if isinstance(exc, NBAUnavailableError) else 0
+                )
                 errors.append({"row": nba_id, "message": str(exc)[:1000]})
                 record("import_failures")
+                progress = {
+                    "status": "failed",
+                    "nba_id": nba_id,
+                    "message": str(exc)[:1000],
+                }
+                if isinstance(exc, NBAUnavailableError) and metadata is not None:
+                    # Valid roster metadata is still useful when the career endpoint
+                    # is unavailable. Keep new identities archived, with incomplete
+                    # coverage; never claim zero appearances or touch existing data.
+                    with Session(engine) as session, session.begin():
+                        placeholder = persist_player(
+                            session,
+                            metadata,
+                            [],
+                            actor_id,
+                            run_id,
+                            history_available=False,
+                        )
+                    if placeholder:
+                        pending += 1
+                        incomplete += 1
+                        progress.update(placeholder, status="pending_history")
                 if on_progress:
-                    on_progress(
-                        {
-                            "status": "failed",
-                            "nba_id": nba_id,
-                            "message": str(exc)[:1000],
-                        }
-                    )
+                    on_progress(progress)
                 if consecutive >= 3:
                     errors.append(
                         {
                             "row": None,
                             "message": (
-                                "Stopped after three consecutive failures; "
+                                "Stopped after three consecutive NBA request failures; "
                                 "remaining players were not attempted."
                             ),
                         }
@@ -213,7 +261,17 @@ def sync_nba(
                 session.get(User, actor_id),
                 "nba.sync",
                 run_id,
-                {"status": status, "synced": synced, "rows": row_count},
+                {
+                    "status": status,
+                    "synced": synced,
+                    "rows": row_count,
+                    "selected": selected_count,
+                    "attempted": attempted,
+                    "unattempted": selected_count - attempted,
+                    "incomplete_histories": incomplete,
+                    "pending_histories": pending,
+                    "catalogued": synced + pending,
+                },
             )
     return {
         "id": str(run_id),
@@ -221,4 +279,10 @@ def sync_nba(
         "synced": synced,
         "row_count": row_count,
         "errors": errors,
+        "selected": selected_count,
+        "attempted": attempted,
+        "unattempted": selected_count - attempted,
+        "incomplete_histories": incomplete,
+        "pending_histories": pending,
+        "catalogued": synced + pending,
     }

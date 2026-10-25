@@ -59,14 +59,20 @@ For native development, replace the Compose prefix with
 - Team codes are preserved historically. Unknown historical codes get an explicit
   code-based label rather than an incorrect current franchise name.
 
-Each player commits in one transaction. Validation/network failures preserve the
-previous history; newly inserted identities and statistics roll back together.
+Each player commits in one transaction. Validation failures roll back new
+identities and statistics together. Network failures preserve previous history.
+When valid metadata is available but a new player's career request fails, its
+archived identity is kept with incomplete coverage and a pending-history report;
+no zero-appearance exemption is inferred from a failed request.
 The job upserts returned season/phase/team rows and does not delete omitted rows.
 Missing seasons remain visible as coverage gaps, including unavailable older
 metrics; they are never automatically converted into zero-game seasons. Verified
 zero-game seasons can still be supplied through the manual import format.
-Current-season rookies explicitly reported with no NBA appearances can have empty
-career histories. Empty histories for established players are errors.
+An empty returned career can still register an archived player identity, with
+missing seasons reported as incomplete coverage. It is not proof of zero NBA
+appearances. The no-appearances exemption is used only for current-season rookies
+explicitly flagged without appearances. An empty response cannot replace stored
+history for a player with recorded appearances.
 
 ## Admin review and existing records
 
@@ -93,16 +99,19 @@ statistics, NBA-team, import-report and audit tables in schema revision `0005`.
 
 Defaults: 20-second request timeout, two retries after the first attempt, and a
 one-second minimum interval between NBA requests. Override with `--timeout`,
-`--retries` (0–5) and `--delay`. Retry backoff is bounded. Three consecutive player
+`--retries` (0–5) and `--delay`. Retry backoff is bounded. Three consecutive NBA request
 failures stop the batch so an upstream outage does not trigger hundreds of retries.
 Avoid running multiple jobs concurrently against the provider; database advisory
 locks prevent duplicate player insertion but are not a shared network rate limiter.
 
 The command prints JSON progress and a final report ID, status, synced-player
-count and row count. Reports appear under recent imports in the admin dashboard,
+count and row count, plus selected/attempted/unattempted counts and the number
+of incomplete histories. `catalogued` includes identities saved pending history;
+`pending_histories` counts those whose career request failed. Reports appear under recent imports in the admin dashboard,
 with source `nba_api:career` or `nba_api:active`; audit history records the actor.
 `complete` exits 0; `partial`/`failed` exits 1. Successful players in a partial batch
-remain committed and can be safely revisited. A graceful interruption closes the
+remain committed and can be safely revisited. Invalid player records are reported and skipped without stopping later records.
+A graceful interruption closes the
 report; a force-killed process may leave a `running` report.
 
 NBA endpoints may time out or reject traffic from some networks. Keep previously

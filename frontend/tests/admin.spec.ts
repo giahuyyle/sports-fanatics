@@ -2,9 +2,11 @@ import { expect, test } from '@playwright/test'
 
 // Connected verification requires FIREBASE_EMULATOR_E2E=1, ADMIN_TEST_EMAIL,
 // ADMIN_TEST_PASSWORD, ADMIN_TEST_API, VITE_FIREBASE_* and API_PROXY_TARGET.
+// AUTH_TEST_URL overrides the Auth emulator URL for isolated Compose ports.
 // Start local Auth emulator/API; grant admin to the supplied emulator account.
 // PLAYWRIGHT_BASE_URL selects an isolated Vite port.
 const connected = process.env.FIREBASE_EMULATOR_E2E === '1'
+const authURL = (process.env.AUTH_TEST_URL ?? 'http://127.0.0.1:9099').replace(/\/$/, '')
 
 test('admin explains missing Firebase configuration', async ({ page }) => {
   test.skip(connected, 'Connected configuration has a real sign-in screen')
@@ -57,7 +59,7 @@ test('admin signs in, edits players, imports stats, publishes a pool, and fits m
   await expect(page.getByRole('alert')).toContainText('No statistics were changed.')
   await expect(page.getByText('Validation errors', { exact: true }).first()).toBeVisible()
   const login = await request.post(
-    'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-key',
+    `${authURL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-key`,
     { data: { email, password, returnSecureToken: true } },
   )
   const token = (await login.json()).idToken
@@ -125,7 +127,7 @@ test('ordinary Firebase users cannot open admin tools', async ({ page, request }
   const email = `ordinary-${Date.now()}@example.test`
   const password = 'local-password-only'
   const signup = await request.post(
-    'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key',
+    `${authURL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key`,
     {
       data: { email, password, returnSecureToken: true },
     },

@@ -38,7 +38,20 @@ reference documents do not apply to this Vite application.
 - Node.js 22.12+ (Node 22 recommended) and npm.
 - Python 3.14 and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
-## Local development
+## Local development with Docker Compose
+
+Follow the [Firebase setup guide](docs/backend/FIREBASE.md) to connect your project,
+configure the root `.env`, and mount your server credential. Then start everything:
+
+```sh
+docker compose up --build
+```
+
+Open http://localhost:5173/#/admin. PostgreSQL, migrations, API, worker and frontend
+run as separate services. The same Compose file provides an optional local Auth
+emulator. See [operations](docs/backend/README.md) for profiles, logs and shutdown.
+
+## Native local development
 
 Run these in two terminals from the repository root.
 

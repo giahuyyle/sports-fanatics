@@ -4,42 +4,62 @@ The backend provides authenticated NBA catalog, team, private-league, draft,
 lineup and admin services. Existing gameplay pages still use the local prototype.
 Only `/#/admin` connects to these services in this release.
 
-## Local setup
+## Local setup with Docker Compose
 
-1. From the root, run `docker compose up -d db`.
-2. In `backend/`, copy `.env.example` to `.env`, run `uv sync`, then
-   `uv run alembic upgrade head`.
-3. Start the API with `uv run uvicorn app.main:app --reload`.
-4. In another backend terminal, run `uv run python -m app.jobs.worker`.
-5. In the repository root, run
-   `npx firebase-tools@14.27.0 emulators:start --only auth --project demo-sports-fanatics`.
-6. Set backend `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` and
-   `FIREBASE_PROJECT_ID=demo-sports-fanatics` before starting the API.
-7. In `frontend/.env`, set `VITE_FIREBASE_PROJECT_ID=demo-sports-fanatics`,
-   `VITE_FIREBASE_API_KEY=demo-key`, `VITE_FIREBASE_AUTH_DOMAIN=localhost`, and
-   `VITE_FIREBASE_AUTH_EMULATOR_URL=http://127.0.0.1:9099`.
-8. Start the frontend with `npm ci` then `npm run dev`.
+One root `compose.yaml` runs PostgreSQL, a one-shot Alembic migration, FastAPI,
+the independent timeout worker, and Vite. The API and worker share one backend
+image. Migration waits for a healthy database; API/worker wait for successful
+migration; frontend waits for API readiness. The optional `emulator` profile adds
+Firebase Auth locally.
 
-Create a local email/password account through the Auth emulator REST API:
+For your real Firebase project, follow the [Firebase setup guide](FIREBASE.md),
+fill the root `.env`, and place the server credential in `.secrets/`. Then run:
 
 ```sh
-curl -X POST 'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key' \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"admin@example.test","password":"local-password-only","returnSecureToken":true}'
+docker compose up --build
 ```
 
-Sign in at `/#/admin`. The page calls `/api/v1/me` to register the internal user.
-Copy the emulator user's `localId` into this operator command, then reload:
+- App/admin: http://localhost:5173/#/admin
+- API docs: http://localhost:8000/docs
+- Process/database health: `/api/health`, `/api/ready`
+- Status: `docker compose ps -a`
+- Logs: `docker compose logs -f api worker`
+- Stop: `docker compose down` (keeps database and emulator data volumes)
 
-```sh
-cd backend
-uv run python -m app.cli grant-admin FIREBASE_UID
-```
+The API reloads mounted Python sources; Vite hot-reloads mounted frontend sources.
+Restart the worker with `docker compose restart worker` after changing worker or
+domain code; it does not run a file watcher.
+Dependencies live inside the images/container volumes, independent of host Python
+and Node installations. After changing dependency lockfiles, rebuild the stack.
+After adding migrations while running, stop API/worker, run
+`docker compose run --rm migrate`, then start API/worker again. Avoid schema
+changes while the worker or API is writing.
 
-Configure players, import their statistics, create a pool, save its player
-selection, and publish it. Validation errors are visible in the dashboard and
-import reports. The dashboard retains selections across catalog searches; each
-search returns up to 200 players.
+This development setup binds ports to the host loopback interface. Override
+`DATABASE_PORT`, `API_PORT`, `FRONTEND_PORT`, `AUTH_PORT` in root `.env` for conflicts.
+Inside Docker, service names (`db`, `api`, `auth`) are used instead of localhost.
+The browser continues to use localhost; Vite proxies `/api` and its event stream.
+
+The migration job normally exits with code 0; this is expected, not a failed
+service. `docker compose down` preserves data. `down --volumes` deletes local data;
+use it only for an intentional reset.
+
+For emulator setup and admin grants, see [Firebase setup](FIREBASE.md).
+
+## Native development alternative
+
+Keep the Compose-managed database, but stop the container API/worker/frontend
+before starting native processes on the same ports. Set native backend/frontend
+`.env` files using their own `.env.example` files. Backend `DATABASE_URL` uses
+`localhost` and the published database port; frontend `API_PROXY_TARGET` uses the
+host API address. For real Firebase, unset the backend emulator host, clear the
+frontend emulator URL, set matching project/web identifiers, and point
+`GOOGLE_APPLICATION_CREDENTIALS` to your server credential's absolute host path.
+
+Run `uv sync`, `uv run alembic upgrade head`, `uv run uvicorn app.main:app --reload`,
+and `uv run python -m app.jobs.worker` from `backend/`. Run `npm ci` and
+`npm run dev` from `frontend/`. Root `.env` is only for Compose; native tools use
+their own subdirectory environment files.
 
 ## Production configuration
 

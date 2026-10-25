@@ -803,3 +803,39 @@ h1:focus {
   background: #ffad70;
   color: #23180f;
 }
+.player-card.recap-pick {
+  background: var(--team-color, #343c43);
+  border-color: color-mix(in srgb, var(--team-color) 60%, white);
+  color: #fff;
+}
+.player-card .player-card-portrait {
+  background: var(--team-color);
+}
+.player-card .player-card-identity {
+  background: color-mix(in srgb, var(--team-color) 75%, black);
+  border-color: #ffffff40;
+}
+.player-card .player-card-position {
+  color: #fff;
+  border-color: #ffffff80;
+}
+.player-card .player-card-team {
+  background: #f6f4ed;
+  border-radius: 50%;
+  padding: 4px;
+}
+.player-card .player-card-team img {
+  width: 40px;
+  height: 40px;
+}
+.player-card .player-card-footer {
+  background: color-mix(in srgb, var(--team-color) 55%, black);
+  color: #fff;
+}
+.player-card .status-tag {
+  color: #fff;
+  border-color: #ffffff70;
+}
+.player-card .photo-fallback {
+  color: #fff;
+}

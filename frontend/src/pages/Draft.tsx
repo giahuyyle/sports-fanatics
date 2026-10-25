@@ -725,8 +725,8 @@ export function Recap({ league }: { league: League }) {
           })}
       </div>
       <p className="local-notice">
-        Season scoring is still being defined. This recap records selections only. Team assignments
-        are illustrative; portrait jerseys may differ.
+        Sample team assignments and 2024/25 statistics; portraits may show a different uniform.
+        Season scoring is still being defined. This recap records selections only.
       </p>
     </>
   )

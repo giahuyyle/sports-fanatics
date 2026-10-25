@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
+import { teamColor } from '../state/team-colors'
 import type { Player } from '../state/types'
 import { PlayerPhoto } from './ui'
 
@@ -35,6 +37,7 @@ export function PlayerCard({
   return (
     <article
       className="panel player-card recap-pick"
+      style={{ '--team-color': teamColor(player.team) } as CSSProperties}
       aria-label={`${player.name}, ${player.position}, ${player.team}, round ${round}, pick ${pick}`}
     >
       <div className="player-card-portrait">

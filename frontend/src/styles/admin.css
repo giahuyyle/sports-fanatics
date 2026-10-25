@@ -150,3 +150,6 @@
 .admin-records li > button {
   margin-left: 12px;
 }
+.admin-error {
+  white-space: pre-line;
+}

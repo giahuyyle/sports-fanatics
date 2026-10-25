@@ -9,6 +9,7 @@ async function adminFixture(
     failAudit?: boolean
     failPermission?: boolean
     html?: boolean
+    validation?: boolean
   } = {},
 ) {
   const writes: { path: string; body: unknown }[] = []
@@ -62,6 +63,22 @@ async function adminFixture(
       path = url.pathname.replace('/api/v1', '')
     if (request.method() !== 'GET') {
       writes.push({ path, body: request.postDataJSON() })
+      if (options.validation)
+        return route.fulfill({
+          status: 422,
+          json: {
+            error: {
+              code: 'invalid_request',
+              message: 'Request validation failed.',
+              details: [
+                {
+                  loc: ['body', 'rookie_season'],
+                  message: 'Rookie season cannot be in the future',
+                },
+              ],
+            },
+          },
+        })
       if (options.slow) await new Promise((resolve) => setTimeout(resolve, 600))
       if (path.endsWith('/players') && path.includes('/pools/'))
         selections[path.split('/')[3]] = request.postDataJSON().player_ids
@@ -248,4 +265,16 @@ test('non-JSON catalog errors retain a retryable panel state', async ({ page }) 
     page.getByText('No players found. Try another search or add a player above.'),
   ).not.toBeVisible()
   await expect(page.getByRole('button', { name: 'Retry loading panels' })).toBeVisible()
+})
+
+test('field validation errors identify the field and retain the editor', async ({ page }) => {
+  await adminFixture(page, { validation: true })
+  await page.getByRole('button', { name: 'Edit Alice Alpha', exact: true }).click()
+  await page.getByRole('button', { name: 'Save player', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText(
+    'rookie_season: Rookie season cannot be in the future',
+  )
+  await expect(page.getByRole('textbox', { name: 'Player name', exact: true })).toHaveValue(
+    'Alice Alpha',
+  )
 })

@@ -26,7 +26,9 @@ export async function adminApi<T>(
   try {
     response = await fetch(`${base}/api/v1${path}`, {
       method,
-      signal: signal ?? AbortSignal.timeout(20_000),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(20_000)])
+        : AbortSignal.timeout(20_000),
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
@@ -51,8 +53,19 @@ export async function adminApi<T>(
   }
   if (!response.ok) {
     const error = result?.error
+    const fields = Array.isArray(error?.details)
+      ? error.details.slice(0, 10).flatMap((entry: { loc?: unknown[]; message?: unknown }) => {
+          if (!entry || typeof entry.message !== 'string') return []
+          const field = Array.isArray(entry.loc)
+            ? entry.loc.filter((part) => part !== 'body').join('.')
+            : ''
+          return [`${field ? `${field}: ` : ''}${entry.message}`]
+        })
+      : []
     throw new ApiError(
-      error?.message ?? `Request failed (${response.status}). Please retry.`,
+      [error?.message ?? `Request failed (${response.status}). Please retry.`, ...fields].join(
+        '\n',
+      ),
       response.status,
       error?.code,
       error?.details,

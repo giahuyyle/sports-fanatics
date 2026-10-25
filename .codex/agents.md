@@ -9,3 +9,4 @@
 - Split completed work into meaningful commits using Conventional Commits. Do not commit unrelated changes or secrets.
 - Before handing off frontend changes, run `npm run lint`, `npm run test`, and `npm run build` in `frontend/`. Run browser checks for affected flows and mobile layouts.
 - Keep this file tracked so the guidance is shared. Root `AGENTS.md` links here for tool discovery.
+- Stop any development, preview, or test servers you start when testing is complete. Preserve servers that the user had already running; track your own process/session IDs and stop only those.

@@ -288,7 +288,7 @@ export default function Fpl() {
               onClick={async () => {
                 setSaving(true)
                 await new Promise((r) => setTimeout(r, 250))
-                actions.savePlan()
+                await actions.savePlan()
                 setSaving(false)
               }}
             >

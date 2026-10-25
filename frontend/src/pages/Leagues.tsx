@@ -164,6 +164,10 @@ export function LeagueForm({ join = false }: { join?: boolean }) {
         setError('That invite code wasn’t found in this browser. Try OFFICE, or create a league.')
         return
       }
+      if (league.participants.some((p) => p.id === league.userId)) {
+        navigate(leaguePath(league))
+        return
+      }
       if (league.status !== 'lobby') {
         setError('That draft has already started. Ask the creator about a new league.')
         return
@@ -180,7 +184,7 @@ export function LeagueForm({ join = false }: { join?: boolean }) {
       }
       setBusy(true)
       await new Promise((resolve) => setTimeout(resolve, 250))
-      actions.joinLeague(league.id, form.team.trim())
+      await actions.joinLeague(league.id, form.team.trim())
       navigate(`/nba/leagues/${league.id}/lobby`)
     } else {
       setBusy(true)
@@ -190,7 +194,7 @@ export function LeagueForm({ join = false }: { join?: boolean }) {
       do {
         code = crypto.randomUUID().replaceAll('-', '').slice(0, 6).toUpperCase()
       } while (leagues.some((l) => l.code === code))
-      actions.addLeague({
+      await actions.addLeague({
         id,
         name: form.name.trim(),
         code,
@@ -341,7 +345,7 @@ export function LeagueForm({ join = false }: { join?: boolean }) {
             </small>
           </form>
         </section>
-        <aside className="setup-aside">
+        <aside className="setup-aside" aria-label="League setup guide">
           <span className="sport-icon">
             <Volleyball />
           </span>
@@ -476,7 +480,7 @@ export function Lobby({ league }: { league: League }) {
             Guest managers make simulated picks. This demo runs in your browser.
           </p>
         </section>
-        <aside className="od-stack">
+        <aside className="od-stack" aria-label="League settings and invitations">
           <section className="panel settings-panel">
             <span className="eyebrow">THE GAME PLAN</span>
             <h2>League settings</h2>
@@ -495,8 +499,8 @@ export function Lobby({ league }: { league: League }) {
             <button
               className="primary-button full"
               disabled={!owner || !full}
-              onClick={() => {
-                actions.startLeague(league.id)
+              onClick={async () => {
+                await actions.startLeague(league.id)
                 navigate(`/nba/leagues/${league.id}/draft`)
               }}
             >
@@ -532,7 +536,7 @@ export function Lobby({ league }: { league: League }) {
           <p>This manager will make simulated draft picks.</p>
           <form
             className="form-body"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault()
               if (!name.trim() || !team.trim()) {
                 setError('Enter a manager name and a team name.')
@@ -544,7 +548,7 @@ export function Lobby({ league }: { league: League }) {
                 setError('Choose a different team name.')
                 return
               }
-              actions.addGuest(league.id, name.trim(), team.trim())
+              await actions.addGuest(league.id, name.trim(), team.trim())
               setName('')
               setTeam('')
               setError('')

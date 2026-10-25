@@ -9,7 +9,7 @@ export default function Settings() {
   const { profile, leagues } = useStore()
   const [name, setName] = useState(profile.name)
   const [reduced, setReduced] = useState(profile.reducedMotion)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState('')
   const [error, setError] = useState('')
   const [reset, setReset] = useState(false)
   return (
@@ -24,14 +24,18 @@ export default function Settings() {
           <h2>Your local profile</h2>
           <p>This is a browser profile, not an authenticated account.</p>
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault()
               if (!name.trim()) {
                 setError('Enter a display name.')
                 return
               }
-              actions.profile(name.trim(), reduced)
-              setSaved(true)
+              const result = await actions.profile(name.trim(), reduced)
+              setSaved(
+                result.persisted
+                  ? 'Profile saved in this browser.'
+                  : 'Profile updated for this visit only; browser storage is unavailable.',
+              )
               setError('')
             }}
             noValidate
@@ -43,7 +47,7 @@ export default function Settings() {
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value)
-                  setSaved(false)
+                  setSaved('')
                 }}
               />
             </label>
@@ -53,7 +57,7 @@ export default function Settings() {
                 checked={reduced}
                 onChange={(e) => {
                   setReduced(e.target.checked)
-                  setSaved(false)
+                  setSaved('')
                 }}
               />
               <span>Reduce animations and stop carousel autoplay</span>
@@ -72,7 +76,7 @@ export default function Settings() {
             </button>
             {saved && (
               <p className="success-note" role="status">
-                Profile saved in this browser.
+                {saved}
               </p>
             )}
           </form>

@@ -76,7 +76,7 @@ export function initialState(): AppState {
     profile: { name: 'Sam Taylor', reducedMotion: false },
     savedPlan: null,
     fpl: {
-      squad: sampleSquad,
+      squad: sampleSquad.map((player) => ({ ...player })),
       outgoingId: 'eze',
       candidateId: 'mbeumo',
       selling: 7,

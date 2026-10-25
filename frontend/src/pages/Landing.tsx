@@ -15,6 +15,7 @@ import { Brand, PlayerPhoto } from '../components/ui'
 import { PlayerCarousel } from '../components/PlayerCarousel'
 import { navigate } from '../state/router'
 import { playerById } from '../state/data'
+import { actions } from '../state/store'
 import { FPL_ENABLED } from '../features'
 
 const faqs = [
@@ -45,6 +46,10 @@ export default function Landing() {
   const [queued, setQueued] = useState<number[]>([])
   const [faq, setFaq] = useState<number | null>(0)
   const go = (path: string) => navigate(path)
+  const exploreDraft = async () => {
+    await actions.ensureDemo()
+    navigate('/nba/leagues/sunday/draft')
+  }
   const scroll = (id: string) => {
     document.getElementById(id)?.scrollIntoView({
       behavior:
@@ -118,10 +123,7 @@ export default function Landing() {
                   Create your league
                   <ArrowRight />
                 </button>
-                <button
-                  className="landing-text-link"
-                  onClick={() => go('/nba/leagues/sunday/draft')}
-                >
+                <button className="landing-text-link" onClick={() => void exploreDraft()}>
                   <span className="play-circle">
                     <Play size={16} />
                   </span>
@@ -148,7 +150,7 @@ export default function Landing() {
                 </div>
                 <button
                   aria-label="Explore the sample draft room"
-                  onClick={() => go('/nba/leagues/sunday/draft')}
+                  onClick={() => void exploreDraft()}
                 >
                   <ArrowRight />
                 </button>
@@ -274,7 +276,7 @@ export default function Landing() {
               )}
               <div className="preview-bottomline">
                 <span>Scout. Queue. Draft. Repeat.</span>
-                <button onClick={() => go('/nba/leagues/sunday/draft')}>
+                <button onClick={() => void exploreDraft()}>
                   Enter the draft room
                   <ArrowRight />
                 </button>

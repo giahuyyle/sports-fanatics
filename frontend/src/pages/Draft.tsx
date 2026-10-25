@@ -16,6 +16,7 @@ import {
   WifiOff,
   X,
 } from 'lucide-react'
+import { normalizeSearch } from '../lib/search'
 import { actions } from '../state/store'
 import { currentParticipant, snakeIndex } from '../state/engine'
 import { playerById, players } from '../state/data'
@@ -43,7 +44,12 @@ function useConnection() {
   return { online, visible }
 }
 export function Draft({ league }: { league: League }) {
-  const [selectedId, setSelectedId] = useState(1628983)
+  const [selectedId, setSelectedId] = useState(
+    () =>
+      players.find((p) => !league.picks.some((pick) => pick.playerId === p.id))?.id ??
+      players[0].id,
+  )
+  const [inspectDrafted, setInspectDrafted] = useState(false)
   const [query, setQuery] = useState('')
   const [position, setPosition] = useState('')
   const [team, setTeam] = useState('')
@@ -79,14 +85,28 @@ export function Draft({ league }: { league: League }) {
     return () => clearTimeout(timeout)
   }, [ownTurn, connected, visible, league.id, league.status, count])
   const drafted = new Set(league.picks.map((p) => p.playerId))
-  const selected = playerById(selectedId)
+  const selected =
+    (!inspectDrafted && drafted.has(selectedId)
+      ? players.find((p) => !drafted.has(p.id))
+      : playerById(selectedId)) ?? playerById(selectedId)
+  const selectPlayer = (id: number) => {
+    setSelectedId(id)
+    setInspectDrafted(drafted.has(id))
+    setMobile('players')
+    if (window.matchMedia('(max-width: 767px)').matches)
+      requestAnimationFrame(() => {
+        const action = document.getElementById('draft-player-action')
+        action?.scrollIntoView({ block: 'center', behavior: 'instant' })
+        document.getElementById('scouting-player-name')?.focus({ preventScroll: true })
+      })
+  }
   const filtered = players
     .filter(
       (p) =>
         (showDrafted || !drafted.has(p.id)) &&
         (!position || p.position === position) &&
         (!team || p.team === team) &&
-        p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+        normalizeSearch(p.name).includes(normalizeSearch(query)),
     )
     .sort((a, b) => (sort === 'rank' ? a.rank - b.rank : b[sort] - a[sort]))
   const roster = league.picks.filter((p) => p.participantId === league.userId)
@@ -212,6 +232,8 @@ export function Draft({ league }: { league: League }) {
             key={tab}
             role="tab"
             tabIndex={mobile === tab ? 0 : -1}
+            id={`draft-tab-${tab}`}
+            aria-controls={`draft-panel-${tab}`}
             aria-selected={mobile === tab}
             className={mobile === tab ? 'active' : ''}
             onClick={() => setMobile(tab)}
@@ -222,6 +244,9 @@ export function Draft({ league }: { league: League }) {
         ))}
       </div>
       <section
+        id="draft-panel-board"
+        role="tabpanel"
+        aria-labelledby="draft-tab-board"
         className={`draft-board panel ${mobile === 'board' ? 'mobile-current' : ''}`}
         aria-label="Draft board"
       >
@@ -279,8 +304,7 @@ export function Draft({ league }: { league: League }) {
                         <button
                           className="pick-player"
                           onClick={() => {
-                            setSelectedId(player.id)
-                            setMobile('players')
+                            selectPlayer(player.id)
                           }}
                           title={player.name}
                         >
@@ -312,6 +336,9 @@ export function Draft({ league }: { league: League }) {
       <div className="draft-workspace">
         <div className="pool-column">
           <section
+            id="draft-panel-players"
+            role="tabpanel"
+            aria-labelledby="draft-tab-players"
             className={`players-panel panel ${mobile === 'players' ? 'mobile-current' : ''}`}
           >
             <div className="section-bar">
@@ -359,82 +386,100 @@ export function Draft({ league }: { league: League }) {
                 </label>
               </div>
             </div>
-            <div className="player-table">
-              <div className="table-header">
-                <button onClick={() => setSort('rank')} aria-label="Sort by sample rank">
-                  #
-                </button>
-                <span>PLAYER</span>
-                {(['points', 'rebounds', 'assists'] as const).map((key, i) => (
-                  <button
-                    key={key}
-                    className={sort === key ? 'orange' : ''}
-                    onClick={() => setSort(key)}
-                    aria-label={`Sort by ${key}`}
-                  >
-                    {['PTS', 'REB', 'AST'][i]}
-                    {sort === key && <ArrowDown size={12} />}
-                  </button>
-                ))}
-                <span className="sr-only">Queue</span>
-              </div>
-              <div className="table-body">
+            <table className="player-table">
+              <caption className="sr-only">
+                NBA players and sample points, rebounds, assists per game
+              </caption>
+              <thead>
+                <tr className="table-header">
+                  <th scope="col" aria-sort={sort === 'rank' ? 'ascending' : undefined}>
+                    <button onClick={() => setSort('rank')} aria-label="# sort by sample rank">
+                      #
+                    </button>
+                  </th>
+                  <th scope="col">PLAYER</th>
+                  {(['points', 'rebounds', 'assists'] as const).map((key, i) => (
+                    <th scope="col" key={key} aria-sort={sort === key ? 'descending' : undefined}>
+                      <button
+                        className={sort === key ? 'orange' : ''}
+                        onClick={() => setSort(key)}
+                        aria-label={`${['PTS', 'REB', 'AST'][i]}: sort by ${key}`}
+                      >
+                        {['PTS', 'REB', 'AST'][i]}
+                        {sort === key && <ArrowDown size={12} />}
+                      </button>
+                    </th>
+                  ))}
+                  <th scope="col">
+                    <span className="sr-only">Queue</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="table-body">
                 {filtered.length ? (
                   filtered.map((p) => (
-                    <div
+                    <tr
                       key={p.id}
-                      className={`player-row ${selectedId === p.id ? 'selected' : ''} ${drafted.has(p.id) ? 'drafted' : ''}`}
+                      className={`player-row ${selected.id === p.id ? 'selected' : ''} ${drafted.has(p.id) ? 'drafted' : ''}`}
                     >
-                      <span className="rank">{String(p.rank).padStart(2, '0')}</span>
-                      <button
-                        className="player-identity"
-                        aria-pressed={selectedId === p.id}
-                        onClick={() => setSelectedId(p.id)}
-                      >
-                        <span className="photo-disc">
-                          <PlayerPhoto player={p} />
-                        </span>
-                        <span className="od-field">
-                          <strong>{p.name}</strong>
-                          <small>
-                            {drafted.has(p.id) ? 'Drafted · ' : ''}
-                            {p.team}
-                            <span className="position-tag">{p.position}</span>
-                          </small>
-                        </span>
-                      </button>
-                      <span className="stat-value">{p.points.toFixed(1)}</span>
-                      <span className="stat-value">{p.rebounds.toFixed(1)}</span>
-                      <span className="stat-value">{p.assists.toFixed(1)}</span>
-                      <button
-                        className={`queue-button ${league.queue.includes(p.id) ? 'queued' : ''}`}
-                        disabled={drafted.has(p.id)}
-                        aria-label={`${league.queue.includes(p.id) ? 'Unqueue' : 'Queue'} ${p.name}`}
-                        aria-pressed={league.queue.includes(p.id)}
-                        onClick={() => actions.toggleQueue(league.id, p.id)}
-                      >
-                        {league.queue.includes(p.id) ? <Check size={16} /> : <Plus size={16} />}
-                      </button>
-                    </div>
+                      <td className="rank">{String(p.rank).padStart(2, '0')}</td>
+                      <td>
+                        <button
+                          className="player-identity"
+                          aria-pressed={selected.id === p.id}
+                          onClick={() => selectPlayer(p.id)}
+                        >
+                          <span className="photo-disc">
+                            <PlayerPhoto player={p} />
+                          </span>
+                          <span className="od-field">
+                            <strong>{p.name}</strong>
+                            <small>
+                              {drafted.has(p.id) ? 'Drafted · ' : ''}
+                              {p.team}
+                              <span className="position-tag">{p.position}</span>
+                            </small>
+                          </span>
+                        </button>
+                      </td>
+                      <td className="stat-value">{p.points.toFixed(1)}</td>
+                      <td className="stat-value">{p.rebounds.toFixed(1)}</td>
+                      <td className="stat-value">{p.assists.toFixed(1)}</td>
+                      <td>
+                        <button
+                          className={`queue-button ${league.queue.includes(p.id) ? 'queued' : ''}`}
+                          disabled={drafted.has(p.id)}
+                          aria-label={`${league.queue.includes(p.id) ? 'Unqueue' : 'Queue'} ${p.name}`}
+                          aria-pressed={league.queue.includes(p.id)}
+                          onClick={() => actions.toggleQueue(league.id, p.id)}
+                        >
+                          {league.queue.includes(p.id) ? <Check size={16} /> : <Plus size={16} />}
+                        </button>
+                      </td>
+                    </tr>
                   ))
                 ) : (
-                  <div className="pool-empty">
-                    <Search />
-                    <h3>No players match that search.</h3>
-                    <button
-                      className="text-button orange"
-                      onClick={() => {
-                        setQuery('')
-                        setTeam('')
-                        setPosition('')
-                      }}
-                    >
-                      Clear filters
-                    </button>
-                  </div>
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="pool-empty">
+                        <Search />
+                        <h3>No players match that search.</h3>
+                        <button
+                          className="text-button orange"
+                          onClick={() => {
+                            setQuery('')
+                            setTeam('')
+                            setPosition('')
+                          }}
+                        >
+                          Clear filters
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 )}
-              </div>
-            </div>
+              </tbody>
+            </table>
             <div className="table-footer">
               <span>
                 {NBA_AFFILIATION_CONTEXT} · {SAMPLE_STATS_CONTEXT} · illustrative rankings
@@ -445,17 +490,30 @@ export function Draft({ league }: { league: League }) {
             Local simulation · opponents pick automatically · the clock pauses away from this page.
           </p>
         </div>
-        <aside className={`draft-aside ${mobile === 'players' ? 'show-detail-mobile' : ''}`}>
+        <aside
+          aria-label="Scouting report and personal roster"
+          className={`draft-aside ${mobile === 'players' ? 'show-detail-mobile' : ''}`}
+        >
           <PlayerDetail
             player={selected}
             unavailable={drafted.has(selected.id)}
+            ownership={
+              league.picks.find((p) => p.playerId === selected.id)?.participantId === league.userId
+                ? 'Already on your roster.'
+                : `Drafted by ${league.participants.find((p) => p.id === league.picks.find((pick) => pick.playerId === selected.id)?.participantId)?.team ?? 'another team'}.`
+            }
             ownTurn={ownTurn}
             connected={connected}
             queued={league.queue.includes(selected.id)}
             onQueue={() => actions.toggleQueue(league.id, selected.id)}
             onDraft={() => actions.pick(league.id, selected.id, count)}
           />
-          <section className={`roster-panel panel ${mobile === 'roster' ? 'mobile-current' : ''}`}>
+          <section
+            id="draft-panel-roster"
+            role="tabpanel"
+            aria-labelledby="draft-tab-roster"
+            className={`roster-panel panel ${mobile === 'roster' ? 'mobile-current' : ''}`}
+          >
             <div className="section-bar roster-tabs">
               <button
                 className={rosterTab === 'roster' ? 'active' : ''}
@@ -601,6 +659,7 @@ export function Draft({ league }: { league: League }) {
 function PlayerDetail({
   player,
   unavailable,
+  ownership,
   ownTurn,
   connected,
   queued,
@@ -609,6 +668,7 @@ function PlayerDetail({
 }: {
   player: Player
   unavailable: boolean
+  ownership: string
   ownTurn: boolean
   connected: boolean
   queued: boolean
@@ -641,7 +701,9 @@ function PlayerDetail({
           </span>
           <span className="rank-tag">RK {player.rank}</span>
         </div>
-        <h2>{player.name}</h2>
+        <h2 id="scouting-player-name" tabIndex={-1}>
+          {player.name}
+        </h2>
         <div className="spotlight-stats">
           {[
             [player.points, 'POINTS'],
@@ -655,6 +717,7 @@ function PlayerDetail({
           ))}
         </div>
         <button
+          id="draft-player-action"
           className="primary-button full"
           disabled={unavailable || !ownTurn || !connected}
           onClick={onDraft}
@@ -669,9 +732,7 @@ function PlayerDetail({
           <ArrowRight />
         </button>
         <p className="draft-help">
-          {unavailable
-            ? 'This player belongs to another roster in this league.'
-            : 'Once selected, this player is exclusively yours.'}
+          {unavailable ? ownership : 'Once selected, this player is exclusively yours.'}
         </p>
       </div>
     </section>

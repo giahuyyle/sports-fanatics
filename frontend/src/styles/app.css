@@ -839,3 +839,98 @@ h1:focus {
 .player-card .photo-fallback {
   color: #fff;
 }
+/* Long valid names and card actions share predictable, shrinkable layout regions. */
+.sidebar {
+  flex-wrap: wrap;
+}
+.sidebar nav {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.sidebar.mobile-open {
+  flex-wrap: nowrap;
+}
+.participant-row > .status-tag {
+  flex-shrink: 0;
+}
+.league-tile h3 {
+  min-height: 2.4em;
+}
+.player-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.player-table thead,
+.player-table tbody {
+  display: block;
+}
+.player-table .player-row > td,
+.player-table .table-header > th {
+  min-width: 0;
+  text-align: left;
+  font-weight: inherit;
+}
+.player-table .player-identity {
+  width: 100%;
+}
+.player-table .table-header button {
+  min-height: 44px;
+}
+.player-table .table-body > tr:has(.pool-empty) {
+  display: block;
+}
+.player-table .table-body > tr:has(.pool-empty) > td {
+  display: block;
+  width: 100%;
+}
+#scouting-player-name:focus {
+  outline: none;
+}
+.preview-topline,
+.preview-table-header,
+.poster-stat-caption,
+.preview-bottomline {
+  font-size: 11px;
+}
+.ticket-avatars > span:last-child {
+  background: #ffad70;
+  color: #23180f;
+}
+.page-title > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.page-title p,
+.draft-announcement,
+.draft-bottom-note,
+.breadcrumb,
+.settings-layout p {
+  overflow-wrap: anywhere;
+}
+/* Keep real surnames readable between the position and logo instead of squeezing five narrow cards. */
+.recap-roster {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+.player-card {
+  container-type: inline-size;
+}
+.player-card .player-card-identity {
+  grid-template-columns: 36px minmax(0, 1fr) 44px;
+  gap: 10px;
+  padding-inline: 12px;
+}
+.player-card .player-card-position {
+  width: 36px;
+}
+.player-card .player-card-team {
+  width: 44px;
+  height: 44px;
+}
+.player-card .player-card-team img {
+  width: 36px;
+  height: 36px;
+}
+.player-card .player-card-identity h3 {
+  font-size: clamp(20px, 7cqi, 26px);
+  text-wrap: balance;
+}

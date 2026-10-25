@@ -35,17 +35,28 @@ export default function App() {
     document.documentElement.dataset.reducedMotion = String(profile.reducedMotion)
   }, [profile.reducedMotion])
   useEffect(() => {
-    document.title = `${path === '/' ? 'Draft night starts here' : path.startsWith('/fpl') ? 'FPL Assistant' : path.startsWith('/nba') ? 'NBA Fantasy' : path === '/settings' ? 'Profile & settings' : 'Your home court'} · Sports Fanatics`
+    document.title = `${path === '/' ? 'Draft night starts here' : path.startsWith('/fpl') ? 'FPL Assistant' : path.startsWith('/nba') ? 'NBA Fantasy' : path === '/settings' ? 'Profile & settings' : path === '/admin' ? 'NBA administration' : path === '/home' ? 'Your home court' : 'Page unavailable'} · Sports Fanatics`
   }, [path])
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
+    let observer: MutationObserver | undefined
+    const focus = () => {
       const heading = document.querySelector('h1')
-      if (heading) {
-        heading.setAttribute('tabindex', '-1')
-        heading.focus({ preventScroll: true })
+      if (!heading) return false
+      heading.setAttribute('tabindex', '-1')
+      heading.focus({ preventScroll: true })
+      observer?.disconnect()
+      return true
+    }
+    const frame = requestAnimationFrame(() => {
+      if (!focus()) {
+        observer = new MutationObserver(focus)
+        observer.observe(document.body, { childList: true, subtree: true })
       }
     })
-    return () => cancelAnimationFrame(frame)
+    return () => {
+      cancelAnimationFrame(frame)
+      observer?.disconnect()
+    }
   }, [path])
   let page
   if (path === '/') page = <Landing />
@@ -67,6 +78,7 @@ export default function App() {
       <LeaguePage key={league.id} league={league} path={path} />
     ) : (
       <EmptyState
+        page
         title="This page is out of bounds."
         description="That league or page isn’t available in this browser. Head back to your leagues or start a new one."
       >

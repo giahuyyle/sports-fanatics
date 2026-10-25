@@ -129,7 +129,16 @@ export function Modal({
         onClose()
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        if (e.target === e.currentTarget) {
+          const rect = e.currentTarget.getBoundingClientRect()
+          if (
+            e.clientX < rect.left ||
+            e.clientX > rect.right ||
+            e.clientY < rect.top ||
+            e.clientY > rect.bottom
+          )
+            onClose()
+        }
       }}
     >
       <div className="modal-header">
@@ -147,15 +156,18 @@ export function EmptyState({
   title,
   description,
   children,
+  page = false,
 }: {
   title: string
   description: string
   children?: ReactNode
+  page?: boolean
 }) {
+  const Heading = page ? 'h1' : 'h2'
   return (
     <section className="panel empty-state">
       <span className="eyebrow orange">YOUR NEXT CHAPTER</span>
-      <h2>{title}</h2>
+      <Heading>{title}</Heading>
       <p>{description}</p>
       <div className="action-row">{children}</div>
     </section>

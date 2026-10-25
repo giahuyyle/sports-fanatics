@@ -165,6 +165,7 @@ export function LeagueForm({ join = false }: { join?: boolean }) {
         return
       }
       if (league.participants.some((p) => p.id === league.userId)) {
+        await actions.joinLeague(league.id, form.team.trim())
         navigate(leaguePath(league))
         return
       }

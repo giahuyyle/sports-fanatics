@@ -33,19 +33,23 @@ test('create, fill, and start a private league', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Draft board', exact: true })).toBeVisible()
   await expect(page.getByText('Pick 1 of 6', { exact: true })).toBeVisible()
 })
-test('join validation and creator restriction', async ({ page }) => {
+test('join validation preserves an existing membership and creator role', async ({ page }) => {
   await page.goto('/#/nba/join')
   await page.getByLabel('Invite code *').fill('WRONG')
   await page.getByLabel('Your team name *').fill('New Rivals')
   await page.getByRole('button', { name: 'Join league', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('wasn’t found')
-  await page.getByLabel('Invite code *').fill('SUNDAY')
-  await page.getByRole('button', { name: 'Join league', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('already started')
   await page.getByLabel('Invite code *').fill('OFFICE')
   await page.getByRole('button', { name: 'Join league', exact: true }).click()
-  await expect(page.getByText('Only the league creator can start this draft.')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Start the draft' })).toBeDisabled()
+  await expect(page).toHaveURL(/office\/lobby/)
+  await expect(page.getByText('2/4 joined', { exact: true })).toBeVisible()
+  const league = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('sports-fanatics:v1')!).leagues.find(
+      (l: { id: string }) => l.id === 'office',
+    ),
+  )
+  expect(league.ownerId).toBe(league.userId)
+  expect(league.participants.filter((p: { id: string }) => p.id === 'you')).toHaveLength(1)
 })
 test('snake endpoints, queue ordering, picks, and reload persistence', async ({ page }) => {
   await page.clock.install()

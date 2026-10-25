@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { CircleHelp, House, Menu, Settings, Volleyball, X } from 'lucide-react'
 import { Brand, Avatar } from './ui'
@@ -10,6 +10,51 @@ import { FPL_ENABLED } from '../features'
 export function Shell({ path, children }: { path: string; children: ReactNode }) {
   const state = useStore()
   const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const resize = () => {
+      if (!window.matchMedia('(max-width: 767px)').matches) setOpen(false)
+    }
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [])
+  useEffect(() => {
+    if (!open) return
+    const menu = menuRef.current!
+    const trigger = triggerRef.current
+    const buttons = () =>
+      [...menu.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')].filter(
+        (b) => b.getClientRects().length,
+      )
+    buttons()[0]?.focus()
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setOpen(false)
+      }
+      if (event.key === 'Tab') {
+        const list = buttons(),
+          first = list[0],
+          last = list.at(-1)
+        if (
+          !menu.contains(document.activeElement) ||
+          (event.shiftKey && document.activeElement === first)
+        ) {
+          event.preventDefault()
+          ;(event.shiftKey ? last : first)?.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first?.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', keyboard)
+    return () => {
+      document.removeEventListener('keydown', keyboard)
+      trigger?.focus()
+    }
+  }, [open])
   const fpl = FPL_ENABLED && path.startsWith('/fpl')
   const leagueId = path.match(/^\/nba\/leagues\/([^/]+)/)?.[1]
   const league = state.leagues.find((l) => l.id === leagueId)
@@ -37,7 +82,13 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
       >
         Skip to content
       </a>
-      <aside className={`sidebar ${open ? 'mobile-open' : ''}`}>
+      <div
+        ref={menuRef}
+        className={`sidebar ${open ? 'mobile-open' : ''}`}
+        role={open ? 'dialog' : undefined}
+        aria-modal={open || undefined}
+        aria-label={open ? 'App navigation' : undefined}
+      >
         <Brand />
         <button
           className="mobile-close icon-button"
@@ -65,10 +116,11 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
           <Avatar name={state.profile.name} small />
           <span>{state.profile.name}</span>
         </button>
-      </aside>
-      <div className="app-body">
+      </div>
+      <div className="app-body" inert={open}>
         <header className="topbar">
           <button
+            ref={triggerRef}
             className="mobile-menu icon-button"
             aria-label="Open navigation"
             aria-expanded={open}
@@ -106,7 +158,7 @@ export function Shell({ path, children }: { path: string; children: ReactNode })
             </label>
           )}
           <span className="prototype-label">
-            {path === '/admin' ? 'Administration · connected API' : 'Local demo · sample data'}
+            {path === '/admin' ? 'Administration' : 'Local demo · sample data'}
           </span>
           <button
             className="icon-button"

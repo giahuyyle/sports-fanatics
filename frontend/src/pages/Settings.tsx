@@ -3,6 +3,7 @@ import { Check, RefreshCcw, Trash2 } from 'lucide-react'
 import { actions, useStore } from '../state/store'
 import { Modal, PageTitle } from '../components/ui'
 import { FPL_ENABLED } from '../features'
+import { NBA_AFFILIATION_CONTEXT, SAMPLE_STATS_CONTEXT } from '../state/player-data-context'
 
 export default function Settings() {
   const { profile, leagues } = useStore()
@@ -83,12 +84,12 @@ export default function Settings() {
             storage is available.
           </p>
           <p>
-            Opponents are simulated. Invite codes work locally. Player rankings, team labels, and
-            2024/25 stats are sample data.
+            Opponents are simulated. Invite codes work locally. {NBA_AFFILIATION_CONTEXT}. Player
+            rankings and {SAMPLE_STATS_CONTEXT} are illustrative.
             {FPL_ENABLED &&
               ' FPL suggestions use an illustrative heuristic, not live ML predictions.'}
           </p>
-          <p>Real accounts, multiplayer, and live data will connect to FastAPI later.</p>
+          <p>Draft gameplay remains a local simulation. The admin catalog connects to FastAPI.</p>
           <div className="action-row">
             <button className="danger-button" onClick={() => setReset(true)}>
               <Trash2 size={16} /> Clear local leagues

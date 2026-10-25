@@ -22,6 +22,7 @@ import { playerById, players } from '../state/data'
 import { Avatar, Modal, PageTitle, PlayerPhoto, RouteButton } from '../components/ui'
 import { Invite } from './Leagues'
 import { PlayerCard } from '../components/PlayerCard'
+import { NBA_AFFILIATION_CONTEXT, SAMPLE_STATS_CONTEXT } from '../state/player-data-context'
 import type { League, Player } from '../state/types'
 
 function useConnection() {
@@ -435,7 +436,9 @@ export function Draft({ league }: { league: League }) {
               </div>
             </div>
             <div className="table-footer">
-              <span>Illustrative rankings · 2024/25 sample statistics & affiliations</span>
+              <span>
+                {NBA_AFFILIATION_CONTEXT} · {SAMPLE_STATS_CONTEXT} · illustrative rankings
+              </span>
             </div>
           </section>
           <p className="draft-bottom-note">
@@ -725,7 +728,7 @@ export function Recap({ league }: { league: League }) {
           })}
       </div>
       <p className="local-notice">
-        Sample team assignments and 2024/25 statistics; portraits may show a different uniform.
+        {NBA_AFFILIATION_CONTEXT}. {SAMPLE_STATS_CONTEXT}; portraits may show a different uniform.
         Season scoring is still being defined. This recap records selections only.
       </p>
     </>

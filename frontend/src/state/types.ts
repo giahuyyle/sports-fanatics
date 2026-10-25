@@ -1,5 +1,7 @@
 export interface Player {
   id: number
+  /** Official NBA ID when a legacy local demo ID is retained. */
+  nbaId?: number
   name: string
   team: string
   position: string

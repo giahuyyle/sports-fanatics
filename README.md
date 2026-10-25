@@ -124,6 +124,26 @@ settings, deep links, and
 320/375/768/1440px layouts. Screenshots are written to
 `/private/tmp/sports-fanatics-qa/` and are not committed.
 
+## Current NBA affiliations
+
+The prototype's team labels use a verified 2026/27 NBA roster snapshot, separate
+from its illustrative 2024/25 statistics and rankings. The verification time and
+source live in `frontend/src/state/player-affiliations.json`. The database already
+stores current affiliations separately from historical season/team splits.
+
+Refresh the prototype snapshot from the host after installing backend dependencies:
+
+```sh
+cd backend
+uv run python -m scripts.refresh_demo_affiliations
+```
+
+The refresh validates NBA IDs/names and changes team labels only. It preserves
+statistics, ranks, manual prototype positions, and local draft IDs. Six older demo
+IDs retain their official identity in `nbaId`; Mikal Bridges has his own corrected
+NBA ID, rather than sharing Shai's ID and portrait. His image uses the initials
+fallback until a matching credited portrait is added.
+
 ## Frontend structure
 
 - `src/components/`: app shell, player carousel, shared UI primitives.

@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { teamColor } from '../state/team-colors'
+import { NBA_AFFILIATION_CONTEXT } from '../state/player-data-context'
 import type { Player } from '../state/types'
 import { PlayerPhoto } from './ui'
 
 function TeamLogo({ team }: { team: string }) {
   const [failed, setFailed] = useState(false)
   return (
-    <span className="player-card-team" title={`${team} · sample team assignment`}>
+    <span className="player-card-team" title={`${team} · ${NBA_AFFILIATION_CONTEXT}`}>
       {failed ? (
         <span>{team}</span>
       ) : (

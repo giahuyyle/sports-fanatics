@@ -230,3 +230,26 @@ test('mobile menu and focused draft views remain usable', async ({ page }) => {
   await page.getByRole('tab', { name: 'Roster 0', exact: true }).click()
   await expect(page.getByText('Open roster spot', { exact: true }).first()).toBeVisible()
 })
+
+test('draft teams and filters use current NBA affiliations separately from sample stats', async ({
+  page,
+}) => {
+  await page.goto('/#/nba/leagues/sunday/draft')
+  await page.getByLabel('Search players').fill('LeBron')
+  const lebron = page.locator('.player-row').filter({ hasText: 'LeBron James' })
+  await expect(lebron).toContainText('PHI')
+  await page.getByLabel('Search players').fill('Jalen Green')
+  await expect(page.locator('.player-row').filter({ hasText: 'Jalen Green' })).toContainText('PHX')
+  await page.getByLabel('Search players').fill('Durant')
+  await expect(page.locator('.player-row').filter({ hasText: 'Kevin Durant' })).toContainText('HOU')
+  await expect(page.locator('.table-footer')).toContainText('2026/27 NBA teams')
+  await expect(page.locator('.table-footer')).toContainText('2024/25 sample statistics')
+  await page.getByLabel('Search players').fill('Mikal')
+  await expect(page.locator('.player-row').filter({ hasText: 'Mikal Bridges' })).toContainText(
+    'NYK',
+  )
+  await page.getByRole('combobox', { name: 'NBA team', exact: true }).selectOption('PHI')
+  await expect(page.locator('.player-row')).toHaveCount(0)
+  await page.getByLabel('Search players').fill('')
+  await expect(page.locator('.player-row').filter({ hasText: 'LeBron James' })).toBeVisible()
+})

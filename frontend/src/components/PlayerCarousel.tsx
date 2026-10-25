@@ -3,6 +3,7 @@ import type { CSSProperties, KeyboardEvent } from 'react'
 import { ArrowDownRight, ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { playerById } from '../state/data'
+import { NBA_AFFILIATION_CONTEXT } from '../state/player-data-context'
 import { useStore } from '../state/store'
 import { PlayerPhoto } from './ui'
 
@@ -144,7 +145,7 @@ export function PlayerCarousel() {
               {slide.number}
             </span>
             <PlayerPhoto key={player.id} player={player} big decorative={false} />
-            <span className="poster-position">
+            <span className="poster-position" title={NBA_AFFILIATION_CONTEXT}>
               {player.team} / {player.position}
             </span>
           </div>

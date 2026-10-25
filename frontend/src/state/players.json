@@ -90,7 +90,7 @@
   {
     "id": 201142,
     "name": "Kevin Durant",
-    "team": "PHX",
+    "team": "HOU",
     "position": "PF",
     "rank": 9,
     "points": 26.6,
@@ -101,7 +101,7 @@
   {
     "id": 2544,
     "name": "LeBron James",
-    "team": "LAL",
+    "team": "PHI",
     "position": "SF",
     "rank": 10,
     "points": 24.4,
@@ -112,7 +112,7 @@
   {
     "id": 1630224,
     "name": "Jalen Green",
-    "team": "HOU",
+    "team": "PHX",
     "position": "SG",
     "rank": 11,
     "points": 21.0,
@@ -156,7 +156,7 @@
   {
     "id": 1629008,
     "name": "Michael Porter Jr.",
-    "team": "DEN",
+    "team": "BKN",
     "position": "SF",
     "rank": 15,
     "points": 18.2,
@@ -178,7 +178,7 @@
   {
     "id": 1629630,
     "name": "Ja Morant",
-    "team": "MEM",
+    "team": "POR",
     "position": "PG",
     "rank": 17,
     "points": 23.2,
@@ -211,7 +211,7 @@
   {
     "id": 1629027,
     "name": "Trae Young",
-    "team": "ATL",
+    "team": "WAS",
     "position": "PG",
     "rank": 20,
     "points": 24.2,
@@ -222,7 +222,7 @@
   {
     "id": 1629673,
     "name": "Jordan Poole",
-    "team": "WAS",
+    "team": "NOP",
     "position": "SG",
     "rank": 21,
     "points": 20.5,
@@ -244,7 +244,7 @@
   {
     "id": 1629636,
     "name": "Darius Garland",
-    "team": "CLE",
+    "team": "LAC",
     "position": "PG",
     "rank": 23,
     "points": 20.6,
@@ -272,18 +272,20 @@
     "points": 24.3,
     "rebounds": 11.0,
     "assists": 3.7,
-    "image": false
+    "image": false,
+    "nbaId": 1641705
   },
   {
     "id": 900026,
     "name": "Anthony Davis",
-    "team": "DAL",
+    "team": "WAS",
     "position": "PF",
     "rank": 26,
     "points": 24.7,
     "rebounds": 11.6,
     "assists": 3.5,
-    "image": false
+    "image": false,
+    "nbaId": 203076
   },
   {
     "id": 900027,
@@ -294,18 +296,20 @@
     "points": 24.4,
     "rebounds": 12.8,
     "assists": 3.1,
-    "image": false
+    "image": false,
+    "nbaId": 1626157
   },
   {
     "id": 900028,
     "name": "Jaylen Brown",
-    "team": "BOS",
+    "team": "PHI",
     "position": "SG",
     "rank": 28,
     "points": 22.2,
     "rebounds": 5.8,
     "assists": 4.5,
-    "image": false
+    "image": false,
+    "nbaId": 1627759
   },
   {
     "id": 900029,
@@ -316,7 +320,8 @@
     "points": 20.2,
     "rebounds": 6.9,
     "assists": 3.4,
-    "image": false
+    "image": false,
+    "nbaId": 1627783
   },
   {
     "id": 900030,
@@ -327,10 +332,11 @@
     "points": 13.4,
     "rebounds": 8.9,
     "assists": 2.3,
-    "image": false
+    "image": false,
+    "nbaId": 1630168
   },
   {
-    "id": 1628983,
+    "id": 1628969,
     "name": "Mikal Bridges",
     "team": "NYK",
     "position": "SF",
@@ -338,6 +344,6 @@
     "points": 17.6,
     "rebounds": 3.2,
     "assists": 3.7,
-    "image": true
+    "image": false
   }
 ]

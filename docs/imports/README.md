@@ -1,5 +1,9 @@
 # Career statistics imports
 
+The primary automated source is [nba_api](NBA-API.md). Use its operator sync job
+for NBA identities and full career season totals; CSV/JSON imports remain available
+for verified corrections and coverage gaps.
+
 Imports contain **season totals**, not averages. Required totals are games,
 starts, minutes, points, rebounds, assists, steals, blocks, turnovers, fouls,
 fg_made, fg_attempted, three_made, three_attempted, ft_made, ft_attempted.
@@ -32,4 +36,5 @@ are invalid; correcting a failed batch creates a new import report.
 
 `GET /api/v1/admin/imports` shows recent reports; `/admin/audit` shows admin actions.
 Raw imported files are not retained; retain original licensed files separately.
-Automatic provider integration and game logs are future work.
+The nba_api provider integration is available now; individual game logs remain
+future work.

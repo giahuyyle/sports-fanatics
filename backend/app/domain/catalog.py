@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 
 from app.db.catalog import AuditLog, SeasonStats
 
@@ -44,3 +45,24 @@ def audit(session, user, action, target, details=None):
             actor_id=user.id, action=action, target=str(target), details=details or {}
         )
     )
+
+
+def upsert_stat_rows(session, rows, import_run_id):
+    """Shared by validated file imports and provider syncs; caller owns transaction."""
+    for row, team in rows:
+        values = row.model_dump(exclude={"totals"})
+        values.update(
+            totals=row.totals.model_dump(),
+            import_run_id=import_run_id,
+            nba_team_id=team.id if team else None,
+        )
+        statement = insert(SeasonStats).values(**values)
+        session.execute(
+            statement.on_conflict_do_update(
+                index_elements=["player_id", "season", "phase", "scope"],
+                set_={
+                    k: statement.excluded[k]
+                    for k in ("totals", "import_run_id", "nba_team_id")
+                },
+            )
+        )

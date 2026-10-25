@@ -61,6 +61,12 @@ and `uv run python -m app.jobs.worker` from `backend/`. Run `npm ci` and
 `npm run dev` from `frontend/`. Root `.env` is only for Compose; native tools use
 their own subdirectory environment files.
 
+## NBA player data
+
+Use the [nba_api synchronization guide](../imports/NBA-API.md) for current roster
+identities and rookie-to-present regular-season/playoff totals. New players are
+archived until reviewed; syncs preserve manual tiers and eligible positions.
+
 ## Production configuration
 
 - Use managed PostgreSQL and run Alembic migrations before starting API/worker.

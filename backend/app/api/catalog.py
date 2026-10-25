@@ -6,9 +6,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import Field, ValidationError, model_validator
 from sqlalchemy import delete, select
-from sqlalchemy.dialects.postgresql import insert
 
 from app.auth import AdminDep, SessionDep, UserDep
 from app.db.catalog import (
@@ -22,16 +21,19 @@ from app.db.catalog import (
     PoolPlayer,
     SeasonStats,
 )
-from app.domain.catalog import POSITIONS, audit, coverage, current_season
+from app.domain.catalog import (
+    POSITIONS,
+    audit,
+    coverage,
+    current_season,
+    upsert_stat_rows,
+)
 from app.errors import DomainError
 from app.observability import record
+from app.schemas.stats import Input, StatRow, Totals  # noqa: F401
 
 router = APIRouter(tags=["players and administration"])
 Position = Literal["PG", "SG", "SF", "PF", "C"]
-
-
-class Input(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
 class PlayerInput(Input):
@@ -59,46 +61,6 @@ class PlayerInput(Input):
         ):
             raise ValueError("Invalid provider identifier")
         return self
-
-
-class Totals(Input):
-    games: int = Field(ge=0)
-    starts: int = Field(ge=0)
-    minutes: float = Field(ge=0, allow_inf_nan=False)
-    points: int = Field(ge=0)
-    rebounds: int = Field(ge=0)
-    assists: int = Field(ge=0)
-    steals: int = Field(ge=0)
-    blocks: int = Field(ge=0)
-    turnovers: int = Field(ge=0)
-    fouls: int = Field(ge=0)
-    fg_made: int = Field(ge=0)
-    fg_attempted: int = Field(ge=0)
-    three_made: int = Field(ge=0)
-    three_attempted: int = Field(ge=0)
-    ft_made: int = Field(ge=0)
-    ft_attempted: int = Field(ge=0)
-
-    @model_validator(mode="after")
-    def valid(self):
-        if self.starts > self.games:
-            raise ValueError("Starts exceed games")
-        for prefix in ("fg", "three", "ft"):
-            if getattr(self, prefix + "_made") > getattr(self, prefix + "_attempted"):
-                raise ValueError("Made shots exceed attempted shots")
-        if self.three_made > self.fg_made or self.three_attempted > self.fg_attempted:
-            raise ValueError("Three pointers exceed field goals")
-        if self.games == 0 and any(self.model_dump().values()):
-            raise ValueError("No-appearance rows must have zero totals")
-        return self
-
-
-class StatRow(Input):
-    player_id: UUID
-    season: int = Field(ge=1946, le=2100)
-    phase: Literal["regular", "playoffs"]
-    scope: str = Field(min_length=1, max_length=12)
-    totals: Totals
 
 
 class ImportInput(Input):
@@ -351,23 +313,7 @@ def import_stats(body: ImportInput, user: AdminDep, session: SessionDep):
     run.status = "failed" if errors else "complete"
     run.row_count = len(rows) if not errors else 0
     if not errors:
-        for row, team in rows:
-            values = row.model_dump(exclude={"totals"})
-            values.update(
-                totals=row.totals.model_dump(),
-                import_run_id=run.id,
-                nba_team_id=team.id if team else None,
-            )
-            statement = insert(SeasonStats).values(**values)
-            session.execute(
-                statement.on_conflict_do_update(
-                    index_elements=["player_id", "season", "phase", "scope"],
-                    set_={
-                        k: statement.excluded[k]
-                        for k in ("totals", "import_run_id", "nba_team_id")
-                    },
-                )
-            )
+        upsert_stat_rows(session, rows, run.id)
     audit(session, user, "stats.import", run.id, {"status": run.status})
     session.commit()
     return (

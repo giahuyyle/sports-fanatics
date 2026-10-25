@@ -28,6 +28,7 @@ FPL remains hidden.
 
 Backend setup and deployment: [operations guide](docs/backend/README.md).
 API contracts: [integration guide](docs/backend/INTEGRATION.md).
+NBA data: [nba_api sync](docs/imports/NBA-API.md).
 Imports: [formats and synthetic examples](docs/imports/README.md).
 Versioned schema diagrams: [database history](docs/database/README.md).
 

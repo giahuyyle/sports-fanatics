@@ -2,12 +2,18 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'win32'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.14' and sys_platform == 'win32'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.15' and sys_platform == 'win32'",
+    "python_full_version == '3.14.*' and sys_platform == 'win32'",
+    "python_full_version >= '3.15' and sys_platform == 'emscripten'",
+    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version < '3.13' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
+    "python_full_version < '3.13' and sys_platform == 'emscripten'",
+    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.13' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
 [[package]]
@@ -1006,6 +1012,19 @@ wheels = [
 ]
 
 [[package]]
+name = "nba-api"
+version = "1.12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pandas" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/02/a9/6088b3077c425b17accdbb248a3a871ea453b55094db9533279e8357f1de/nba_api-1.12.0.tar.gz", hash = "sha256:72a405ada9acc209a3028cd4f6ab7e075cfc49fd809515f58aaa72b3715924fd", size = 187074, upload-time = "2026-10-24T05:33:05.739Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/d0/34331d1abd4bdfdf620f2523e38f9d38633a419047e1a05030283c9897b9/nba_api-1.12.0-py3-none-any.whl", hash = "sha256:f684ec847e41c84776a9b86062a4c26e4edfa31091c3dd5f8d93ecf66ef19053", size = 334806, upload-time = "2026-10-24T05:33:04.077Z" },
+]
+
+[[package]]
 name = "numpy"
 version = "2.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1630,6 +1649,7 @@ dependencies = [
     { name = "alembic" },
     { name = "fastapi" },
     { name = "firebase-admin" },
+    { name = "nba-api" },
     { name = "ortools" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
@@ -1649,6 +1669,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.14,<2" },
     { name = "fastapi", specifier = ">=0.115,<1.0" },
     { name = "firebase-admin", specifier = ">=6.6,<8" },
+    { name = "nba-api", specifier = ">=1.11,<2" },
     { name = "ortools", specifier = ">=9.15,<10" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
     { name = "pydantic-settings", specifier = ">=2.7,<3.0" },

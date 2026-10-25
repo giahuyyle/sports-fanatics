@@ -1,41 +1,42 @@
-import { useEffect, useState } from 'react'
-import { getHealth } from './lib/api'
+import { useEffect } from 'react'
+import { MotionConfig, motion } from 'motion/react'
+import { useRoute, navigate } from './state/router'
+import { useStore } from './state/store'
+import { leaguePath } from './state/engine'
+import { Shell } from './components/Shell'
+import { EmptyState, RouteButton } from './components/ui'
+import Landing from './pages/Landing'
+import { LeagueForm, Leagues, Lobby } from './pages/Leagues'
+import { Draft, Recap } from './pages/Draft'
+import Fpl from './pages/Fpl'
+import Settings from './pages/Settings'
+import type { League } from './state/types'
 
+function LeaguePage({ league, path }: { league: League; path: string }) {
+  useEffect(() => { const target = leaguePath(league); if (target !== path) navigate(target) }, [league, path])
+  if (league.status === 'lobby') return <Lobby league={league}/>
+  if (league.status === 'complete') return <Recap league={league}/>
+  return <Draft league={league}/>
+}
 export default function App() {
-  const [apiStatus, setApiStatus] = useState('Connecting to API…')
-
+  const path = useRoute()
+  const { profile, leagues } = useStore()
   useEffect(() => {
-    const controller = new AbortController()
-    getHealth(controller.signal)
-      .then(({ status }) => setApiStatus(status === 'ok' ? 'API connected' : 'API unavailable'))
-      .catch(() => {
-        if (!controller.signal.aborted) setApiStatus('API offline — start the backend to connect')
-      })
-    return () => controller.abort()
-  }, [])
-
-  return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-16">
-      <p className="text-sm font-semibold uppercase tracking-widest text-zinc-400">Sports Fanatics</p>
-      <h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-6xl">Your next game starts here.</h1>
-      <p className="mt-5 max-w-xl text-lg leading-relaxed text-zinc-400">
-        Draft NBA teams with friends. Make smarter FPL decisions.
-      </p>
-      <div className="mt-12 grid gap-5 sm:grid-cols-2">
-        <section className="rounded-2xl border border-zinc-800 p-7">
-          <p className="text-sm font-medium text-orange-400">NBA Fantasy</p>
-          <h2 className="mt-3 text-2xl font-semibold">Build your dream roster.</h2>
-          <p className="mt-3 leading-relaxed text-zinc-400">Private leagues and live snake drafts with your friends.</p>
-          <p className="mt-6 text-sm text-zinc-500">Coming soon</p>
-        </section>
-        <section className="rounded-2xl border border-zinc-800 p-7">
-          <p className="text-sm font-medium text-emerald-400">FPL Assistant</p>
-          <h2 className="mt-3 text-2xl font-semibold">Make every transfer count.</h2>
-          <p className="mt-3 leading-relaxed text-zinc-400">Player predictions and transfer comparisons for your squad.</p>
-          <p className="mt-6 text-sm text-zinc-500">Coming soon</p>
-        </section>
-      </div>
-      <p role="status" className="mt-8 text-sm text-zinc-500">{apiStatus}</p>
-    </main>
-  )
+    document.documentElement.dataset.reducedMotion = String(profile.reducedMotion)
+  }, [profile.reducedMotion])
+  useEffect(() => {
+    document.title = `${path === '/' ? 'Draft night starts here' : path.startsWith('/fpl') ? 'FPL Assistant' : path.startsWith('/nba') ? 'NBA Fantasy' : path === '/settings' ? 'Profile & settings' : 'Your home court'} · Sports Fanatics`
+  }, [path])
+  let page
+  if (path === '/') page = <Landing/>
+  else if (path === '/home' || path === '/nba') page = <Leagues home={path === '/home'}/>
+  else if (path === '/nba/create' || path === '/nba/join') page = <LeagueForm key={path} join={path.endsWith('join')}/>
+  else if (path === '/fpl') page = <Fpl/>
+  else if (path === '/settings') page = <Settings/>
+  else {
+    const match = path.match(/^\/nba\/leagues\/([^/]+)\/(lobby|draft|recap)$/)
+    const league = match && leagues.find((l) => l.id === match[1])
+    page = league ? <LeaguePage key={league.id} league={league} path={path}/> : <EmptyState title="This page is out of bounds." description="That league or page isn’t available in this browser. Head back to your leagues or start a new one."><RouteButton to="/nba">Back to leagues</RouteButton></EmptyState>
+  }
+  return <MotionConfig reducedMotion={profile.reducedMotion ? 'always' : 'user'}>{path === '/' ? page : <Shell path={path}><motion.div key={path.startsWith('/nba/leagues/') ? path.split('/').slice(0, 4).join('/') : path} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }}>{page}</motion.div></Shell>}</MotionConfig>
 }

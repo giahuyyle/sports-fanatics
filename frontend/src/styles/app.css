@@ -684,3 +684,122 @@ h1:focus {
     min-width: 70px;
   }
 }
+/* Stable card regions follow the player-card sketch: portrait, identity band, pick footer. */
+.player-card.recap-pick {
+  padding: 0;
+  display: grid;
+  grid-template-rows: auto 112px auto;
+  overflow: hidden;
+  min-width: 0;
+}
+.player-card-portrait {
+  aspect-ratio: 520 / 380;
+  display: grid;
+  place-items: end center;
+  background: var(--raised);
+  padding: 12px 16px 0;
+  overflow: hidden;
+}
+.player-card-portrait .player-photo {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: contain;
+}
+.player-card-portrait .photo-fallback {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  font-size: 56px;
+  border-radius: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+}
+.player-card-identity {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-block: 1px solid var(--line);
+}
+.player-card-identity h3 {
+  font: 600 clamp(20px, 1.5vw, 26px)/1.15 var(--display);
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.player-card-position {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 14px;
+  color: var(--orange);
+}
+.player-card-team {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  font-size: 12px;
+}
+.player-card-team img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.player-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 76px;
+}
+.league-tile > .participant-stack {
+  margin-top: auto;
+}
+.league-tile h3,
+.league-tile p,
+.participant-row .od-field,
+.roster-row .od-field,
+.queue-entry,
+.turn-copy,
+.next-up {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.sidebar .profile-button {
+  min-width: 0;
+  max-width: 220px;
+}
+.sidebar .profile-button > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.league-tile {
+  min-width: 0;
+}
+.participant-row {
+  min-width: 0;
+}
+.participant-row > .od-field {
+  flex: 1;
+}
+.ticket-avatars > span {
+  font-size: 11px !important;
+  min-width: 30px;
+  min-height: 30px;
+}
+.ticket-avatars > span:last-child {
+  background: #ffad70;
+  color: #23180f;
+}

@@ -21,6 +21,7 @@ import { currentParticipant, snakeIndex } from '../state/engine'
 import { playerById, players } from '../state/data'
 import { Avatar, Modal, PageTitle, PlayerPhoto, RouteButton } from '../components/ui'
 import { Invite } from './Leagues'
+import { PlayerCard } from '../components/PlayerCard'
 import type { League, Player } from '../state/types'
 
 function useConnection() {
@@ -713,22 +714,19 @@ export function Recap({ league }: { league: League }) {
           .map(({ pick, index }) => {
             const player = playerById(pick.playerId)
             return (
-              <section className="panel recap-pick" key={player.id}>
-                <span className="eyebrow">
-                  ROUND {Math.floor(index / league.capacity) + 1} · PICK {index + 1}
-                </span>
-                <PlayerPhoto player={player} />
-                <h3>{player.name}</h3>
-                <p>
-                  {player.team} · {player.position}
-                </p>
-                {pick.automatic && <span className="status-tag">Automatic pick</span>}
-              </section>
+              <PlayerCard
+                key={player.id}
+                player={player}
+                round={Math.floor(index / league.capacity) + 1}
+                pick={index + 1}
+                automatic={pick.automatic}
+              />
             )
           })}
       </div>
       <p className="local-notice">
-        Season scoring is still being defined. This recap records selections only.
+        Season scoring is still being defined. This recap records selections only. Team assignments
+        are illustrative; portrait jerseys may differ.
       </p>
     </>
   )

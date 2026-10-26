@@ -35,6 +35,8 @@ export function PlayerCard({
   pick: number
   automatic: boolean
 }) {
+  const [firstName, ...surname] = player.name.trim().split(/\s+/)
+
   return (
     <article
       className="panel player-card recap-pick"
@@ -48,7 +50,10 @@ export function PlayerCard({
         <span className="player-card-position" aria-label={`Primary position: ${player.position}`}>
           {player.position}
         </span>
-        <h3>{player.name}</h3>
+        <h3>
+          <span>{firstName}</span>{' '}
+          <span>{surname.join(' ')}</span>
+        </h3>
         <TeamLogo key={player.team} team={player.team} />
       </div>
       <footer className="player-card-footer">

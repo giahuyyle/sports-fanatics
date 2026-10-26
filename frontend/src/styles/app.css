@@ -931,6 +931,9 @@ h1:focus {
   height: 36px;
 }
 .player-card .player-card-identity h3 {
-  font-size: clamp(20px, 7cqi, 26px);
-  text-wrap: balance;
+  font-size: clamp(16px, 6cqi, 24px);
+}
+.player-card-identity h3 span {
+  display: block;
+  white-space: nowrap;
 }

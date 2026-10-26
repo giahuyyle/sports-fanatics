@@ -272,7 +272,7 @@
     "points": 24.3,
     "rebounds": 11.0,
     "assists": 3.7,
-    "image": false,
+    "image": true,
     "nbaId": 1641705
   },
   {
@@ -284,7 +284,7 @@
     "points": 24.7,
     "rebounds": 11.6,
     "assists": 3.5,
-    "image": false,
+    "image": true,
     "nbaId": 203076
   },
   {
@@ -296,7 +296,7 @@
     "points": 24.4,
     "rebounds": 12.8,
     "assists": 3.1,
-    "image": false,
+    "image": true,
     "nbaId": 1626157
   },
   {
@@ -308,7 +308,7 @@
     "points": 22.2,
     "rebounds": 5.8,
     "assists": 4.5,
-    "image": false,
+    "image": true,
     "nbaId": 1627759
   },
   {
@@ -320,7 +320,7 @@
     "points": 20.2,
     "rebounds": 6.9,
     "assists": 3.4,
-    "image": false,
+    "image": true,
     "nbaId": 1627783
   },
   {
@@ -332,7 +332,7 @@
     "points": 13.4,
     "rebounds": 8.9,
     "assists": 2.3,
-    "image": false,
+    "image": true,
     "nbaId": 1630168
   },
   {
@@ -344,6 +344,6 @@
     "points": 17.6,
     "rebounds": 3.2,
     "assists": 3.7,
-    "image": false
+    "image": true
   }
 ]

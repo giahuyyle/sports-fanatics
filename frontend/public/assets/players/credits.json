@@ -1,6 +1,6 @@
 [
   {
-    "player": "Nikola Joki\u0107",
+    "player": "Nikola Jokić",
     "file": "203999.png",
     "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/203999.png",
     "owner": "NBA and respective rights holders",
@@ -16,7 +16,7 @@
     "retrieved": "2026-10-25"
   },
   {
-    "player": "Luka Don\u010di\u0107",
+    "player": "Luka Dončić",
     "file": "1629029.png",
     "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1629029.png",
     "owner": "NBA and respective rights holders",
@@ -104,7 +104,7 @@
     "retrieved": "2026-10-25"
   },
   {
-    "player": "Alperen \u015eeng\u00fcn",
+    "player": "Alperen Şengün",
     "file": "1630578.png",
     "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1630578.png",
     "owner": "NBA and respective rights holders",
@@ -192,11 +192,59 @@
     "retrieved": "2026-10-25"
   },
   {
-    "player": "Mikal Bridges",
-    "file": "1628983.png",
-    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1628983.png",
+    "player": "Victor Wembanyama",
+    "file": "900025.png",
+    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1641705.png",
     "owner": "NBA and respective rights holders",
     "rights": "Copyrighted reference headshot. No commercial redistribution license asserted.",
-    "retrieved": "2026-10-25"
+    "retrieved": "2026-10-26"
+  },
+  {
+    "player": "Anthony Davis",
+    "file": "900026.png",
+    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/203076.png",
+    "owner": "NBA and respective rights holders",
+    "rights": "Copyrighted reference headshot. No commercial redistribution license asserted.",
+    "retrieved": "2026-10-26"
+  },
+  {
+    "player": "Karl-Anthony Towns",
+    "file": "900027.png",
+    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1626157.png",
+    "owner": "NBA and respective rights holders",
+    "rights": "Copyrighted reference headshot. No commercial redistribution license asserted.",
+    "retrieved": "2026-10-26"
+  },
+  {
+    "player": "Jaylen Brown",
+    "file": "900028.png",
+    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1627759.png",
+    "owner": "NBA and respective rights holders",
+    "rights": "Copyrighted reference headshot. No commercial redistribution license asserted.",
+    "retrieved": "2026-10-26"
+  },
+  {
+    "player": "Pascal Siakam",
+    "file": "900029.png",
+    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1627783.png",
+    "owner": "NBA and respective rights holders",
+    "rights": "Copyrighted reference headshot. No commercial redistribution license asserted.",
+    "retrieved": "2026-10-26"
+  },
+  {
+    "player": "Onyeka Okongwu",
+    "file": "900030.png",
+    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1630168.png",
+    "owner": "NBA and respective rights holders",
+    "rights": "Copyrighted reference headshot. No commercial redistribution license asserted.",
+    "retrieved": "2026-10-26"
+  },
+  {
+    "player": "Mikal Bridges",
+    "file": "1628969.png",
+    "source": "https://cdn.nba.com/headshots/nba/latest/1040x760/1628969.png",
+    "owner": "NBA and respective rights holders",
+    "rights": "Copyrighted reference headshot. No commercial redistribution license asserted.",
+    "retrieved": "2026-10-26"
   }
 ]

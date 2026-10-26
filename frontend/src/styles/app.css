@@ -907,9 +907,11 @@ h1:focus {
 .settings-layout p {
   overflow-wrap: anywhere;
 }
-/* Keep real surnames readable between the position and logo instead of squeezing five narrow cards. */
+/* Keep the full starting five together; narrow screens scroll the lineup. */
 .recap-roster {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  grid-template-columns: repeat(5, minmax(240px, 1fr));
+  overflow-x: auto;
+  padding-bottom: 8px;
 }
 .player-card {
   container-type: inline-size;

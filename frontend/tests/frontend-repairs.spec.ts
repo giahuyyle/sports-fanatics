@@ -153,6 +153,7 @@ test('team-colored cards reserve equal portrait, identity and footer rows', asyn
   await expect(page.locator('.player-card')).toHaveCount(5)
   const cards = await page.locator('.player-card').evaluateAll((cards) =>
     cards.map((card) => ({
+      top: card.getBoundingClientRect().top,
       portrait: card.querySelector('.player-card-portrait')!.getBoundingClientRect().height,
       identity: card.querySelector('.player-card-identity')!.getBoundingClientRect().height,
       footer:
@@ -162,6 +163,7 @@ test('team-colored cards reserve equal portrait, identity and footer rows', asyn
     })),
   )
   expect(new Set(cards.map((c) => c.portrait)).size).toBe(1)
+  expect(new Set(cards.map((c) => c.top)).size).toBe(1)
   expect(new Set(cards.map((c) => c.identity)).size).toBe(1)
   expect(new Set(cards.map((c) => c.footer)).size).toBe(1)
   expect(new Set(cards.map((c) => c.background)).size).toBeGreaterThan(1)
@@ -180,6 +182,12 @@ test('team-colored cards reserve equal portrait, identity and footer rows', asyn
     .first()
     .screenshot({ path: '/private/tmp/sports-fanatics-repairs/giannis-card.png' })
   await page.setViewportSize({ width: 375, height: 812 })
+  const lineup = page.locator('.recap-roster')
+  expect(await lineup.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true)
+  await lineup.evaluate((element) => {
+    element.scrollLeft = element.scrollWidth
+  })
+  await expect(page.locator('.player-card').last()).toBeInViewport()
   await page.screenshot({
     path: '/private/tmp/sports-fanatics-repairs/cards-mobile.png',
     fullPage: true,

@@ -1,0 +1,10 @@
+# environment file
+.env
+.venv/
+
+# cache
+__pycache__/
+.DS_Store
+
+# database (sqlite)
+*.db

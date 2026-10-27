@@ -1,7 +1,0 @@
-node_modules
-dist
-package-lock.json
-src/styles/reference.css
-public
-test-results
-playwright-report

@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.api.dependencies import get_db
 from app.models.team import TeamResponse, TeamUpdate
@@ -9,6 +10,11 @@ from app.schema.team import Team
 
 router = APIRouter(prefix="/teams", tags=["teams"])
 SessionDep = Annotated[Session, Depends(get_db)]
+
+
+@router.get("", response_model=list[TeamResponse])
+def get_teams(session: SessionDep):
+    return session.scalars(select(Team).order_by(Team.id)).all()
 
 
 @router.get("/{team_id}", response_model=TeamResponse)

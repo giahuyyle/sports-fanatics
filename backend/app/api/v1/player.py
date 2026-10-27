@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.api.dependencies import get_db
@@ -10,6 +11,10 @@ from app.schema.player import Player
 
 router = APIRouter(prefix="/players", tags=["players"])
 SessionDep = Annotated[Session, Depends(get_db)]
+
+@router.get("", response_model=list[PlayerResponse])
+def get_players(session: SessionDep):
+    return session.scalars(select(Player).order_by(Player.id)).all()
 
 
 @router.get("/{player_id}", response_model=PlayerResponse)

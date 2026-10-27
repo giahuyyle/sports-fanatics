@@ -5,8 +5,8 @@ class SeasonStatResponse(ORMResponseModel):
     id: int
 
     player_id: int
-    season_id: int
-    league_id: int
+    season_id: str
+    league_id: str
 
     # team_id can be 0, 0 means total stats for a player
     # that has been traded mid-season, i.e. played for 2+ teams
@@ -50,8 +50,8 @@ class SeasonStatsUpdate(RequestModel):
     id: int
     
     player_id: int
-    season_id: int
-    league_id: int
+    season_id: str
+    league_id: str
 
     # team_id can be 0, 0 means total stats for a player
     # that has been traded mid-season, i.e. played for 2+ teams

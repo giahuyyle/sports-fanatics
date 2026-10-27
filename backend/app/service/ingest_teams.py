@@ -24,6 +24,8 @@ def ingest_teams():
                 new_team.state = team["state"]
                 new_team.year_founded = team["year_founded"]
 
+                session.add(new_team)
+
     session.flush()
     return
 

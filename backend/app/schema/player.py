@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, sessionmaker
-from base import Base
+from app.schema.base import Base
 
 from sqlalchemy import (
     String,

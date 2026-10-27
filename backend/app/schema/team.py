@@ -10,5 +10,11 @@ class Team(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
-    short_name: Mapped[str] = mapped_column(String(3))
+    abbreviation: Mapped[str] = mapped_column(String(3))
+    nick_name: Mapped[str] = mapped_column(String(15))
     full_name: Mapped[str] = mapped_column(String(35))
+
+    city: Mapped[str] = mapped_column(String(15))
+    state: Mapped[str] = mapped_column(String(15))
+
+    year_founded: Mapped[int] = mapped_column(nullable=False)

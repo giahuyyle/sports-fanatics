@@ -1,5 +1,6 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import NotFound from './pages/NotFound';
 
 function App() {
     return (
@@ -7,7 +8,9 @@ function App() {
             <Navbar />
 
             <div className='app-content'>
-                <h1>Hello</h1>
+                <Routes>
+                    <Route path="*" element={<NotFound />} />
+                </Routes>
             </div>
         </div>
     );

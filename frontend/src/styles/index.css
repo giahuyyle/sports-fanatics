@@ -6,3 +6,15 @@
   font-family: "Space Grotesk", sans-serif;
   color: #333;
 }
+
+.app-container {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.app-content {
+  flex: 1;
+  display: flex;
+}

@@ -3,18 +3,380 @@ import { Heading } from '../App';
 import type { GameProps } from '../App';
 import type { Draft } from '../game';
 import { filterPlayers, ownerAt, validSetup } from '../game';
-function Board({draft}:{draft:Draft}){const size=draft.entries.length,done=draft.picks.length===size*5;return <section className="league-board panel"><div className="scorebar"><h3>Draft board</h3><span className="muted">{size} teams · 5 rounds</span></div><div className="board-scroll" tabIndex={0} aria-label="League draft board, scroll horizontally"><div className="board-grid" style={{gridTemplateColumns:`repeat(${size}, minmax(136px, 1fr))`}}>{draft.entries.map((e,i)=><div className="board-team" key={i}><strong>{e.team}</strong><small>{e.manager}</small></div>)}{Array.from({length:5},(_,r)=>draft.entries.map((_,owner)=>{const pick=r*size+(r%2?size-1-owner:owner),entry=draft.picks[pick];return <div className={`board-pick ${pick===draft.picks.length&&!done?'on-clock':''}`} key={pick}><small>#{pick+1}{pick===draft.picks.length&&!done?' · On clock':''}</small><span>{entry?.player.name||'—'}</span></div>;}))}</div></div></section>;}
-export default function Fantasy({state,setState,catalog}:GameProps){
- const [error,setError]=useState(''),[search,setSearch]=useState(''),[position,setPosition]=useState('all'),[roster,setRoster]=useState(0);const searchRef=useRef<HTMLInputElement>(null);
- const d=state.draft,setup=state.setup;
- const handoff=useRef<HTMLButtonElement>(null);const pickCount=d?.picks.length;const ready=d?.ready;
- useEffect(()=>{if(ready)searchRef.current?.focus();else handoff.current?.focus();},[pickCount,ready]);
- const reset=()=>{setState(s=>({...s,draft:null}));setSearch('');setPosition('all');setRoster(0);setError('');};
- if(!d)return <><Heading title="Fantasy league" copy="Local league · Human managers"/><section className="panel"><form onSubmit={e=>{e.preventDefault();const entries=setup.entries.slice(0,setup.size).map(e=>({team:e.team.trim(),manager:e.manager.trim()}));if(!validSetup(setup.name,entries)){setError('Enter a league name and unique team and manager names.');return;}if(catalog.players.length<setup.size*5){setError(`This league needs ${setup.size*5} imported draft players; ${catalog.players.length} are available.`);return;}setState(s=>({...s,draft:{name:setup.name.trim(),entries,picks:[],ready:false}}));setError('');}}><div className="league-fields"><div><label htmlFor="league-name">League name</label><input id="league-name" maxLength={40} value={setup.name} onChange={e=>setState(s=>({...s,setup:{...s.setup,name:e.target.value}}))}/></div><div><label htmlFor="league-size">Teams</label><select id="league-size" value={setup.size} onChange={e=>setState(s=>({...s,setup:{...s.setup,size:+e.target.value}}))}>{[4,5,6,7,8].map(n=><option key={n} value={n}>{n} teams</option>)}</select></div></div><div className="manager-grid">{setup.entries.slice(0,setup.size).map((entry,i)=><div className="manager-entry" key={i}><span className="eyebrow">PICK {i+1}</span>{(['manager','team'] as const).map(field=><div key={field}><label htmlFor={`${field}-${i}`}>{field==='manager'?'Manager':'Team'}</label><input id={`${field}-${i}`} maxLength={32} value={entry[field]} onChange={e=>setState(s=>({...s,setup:{...s.setup,entries:s.setup.entries.map((v,j)=>j===i?{...v,[field]:e.target.value}:v)}}))}/></div>)}</div>)}</div><p>Five players per team. Snake order. One shared device.</p><p role="alert" className="notice">{error}</p><button className="primary">Start league draft →</button></form></section></>;
- const size=d.entries.length,done=d.picks.length===size*5,current=ownerAt(d.picks.length,size),last=d.picks.at(-1);
- const rosterPanel=(i:number)=><>{d.picks.filter(p=>p.owner===i).map(p=><div className="roster-item" key={p.pick}>{p.player.name}<p>{p.player.position} · {p.player.team} · Pick {p.pick+1}</p></div>)}{!d.picks.some(p=>p.owner===i)&&<p>No picks yet.</p>}</>;
- if(done)return <><Heading title={d.name} copy="Draft complete"/><Board draft={d}/><div className="section-head"><h2>Team rosters</h2><button ref={handoff} className="secondary" onClick={reset}>New league</button></div><div className="league-rosters">{d.entries.map((e,i)=><section className="panel" key={i}><h3>{e.team}</h3><p>{e.manager}</p>{rosterPanel(i)}</section>)}</div></>;
- if(!d.ready)return <><Heading title={d.name}/><section className="panel"><p>{last?`${d.entries[last.owner].team} picked ${last.player.name}.`:'League draft ready.'}</p><h2 className="handoff-title">{d.entries[current].manager}, you’re up.</h2><p>{d.entries[current].team} · Round {Math.floor(d.picks.length/size)+1} · Pick {d.picks.length+1} / {size*5}</p><button ref={handoff} className="primary handoff-button" onClick={()=>{setRoster(current);setState(s=>({...s,draft:s.draft?{...s.draft,ready:true}:null}));}}>Make pick →</button></section><div className="board-section"><Board draft={d}/></div></>;
- const available=filterPlayers(catalog.players,d.picks,search,position);
- return <><Heading title={d.name}/><div className="draft-top"><div><h2>{d.entries[current].team}’s pick</h2><p>{d.entries[current].manager} · Round {Math.floor(d.picks.length/size)+1} / 5 · Pick {d.picks.length+1} / {size*5}</p></div><span>{size}-team league</span></div><div className="draft-layout"><section className="panel"><div className="scorebar"><h3>Players</h3><span className="muted">{catalog.rankingLabel}</span></div><div className="filter-row"><div className="search-field"><label htmlFor="search-player">Search</label><input ref={searchRef} autoFocus id="search-player" value={search} placeholder="Name or team" onChange={e=>setSearch(e.target.value)}/></div><div><label htmlFor="position">Position</label><select id="position" value={position} onChange={e=>setPosition(e.target.value)}><option value="all">All</option>{['G','F','C'].map(p=><option key={p}>{p}</option>)}</select></div></div>{available.length?available.map(p=><div className="player-row" key={p.id}><span className="rank">{String(p.rank).padStart(2,'0')}</span><div><div className="player-name">{p.name}</div><div className="player-info">{p.team} · {p.position==='G'?'Guard':p.position==='F'?'Forward':'Center'}</div></div><span className="muted">{p.position}</span><button className="primary" aria-label={`Draft ${p.name}`} onClick={()=>{setState(s=>{const draft=s.draft;if(!draft?.ready||draft.picks.length>=draft.entries.length*5||draft.picks.some(x=>x.player.id===p.id))return s;const picks=[...draft.picks,{player:p,owner:ownerAt(draft.picks.length,draft.entries.length),pick:draft.picks.length}];return {...s,draft:{...draft,picks,ready:false},progress:{...s.progress,drafts:s.progress.drafts+(picks.length===draft.entries.length*5?1:0)}};});setSearch('');setPosition('all');}}>Draft +</button></div>):<p role="status">No matches. {filterPlayers(catalog.players,d.picks,'','all').length===0?'No imported draft players remain. Import missing players and reload.':'Try another name, team, or position.'}</p>}</section><aside><section className="panel"><label htmlFor="roster-team">Team roster</label><select id="roster-team" value={roster} onChange={e=>setRoster(+e.target.value)}>{d.entries.map((e,i)=><option key={i} value={i}>{e.team}</option>)}</select>{rosterPanel(roster)}</section><section className="panel log"><h3>Recent picks</h3>{d.picks.length?d.picks.slice().reverse().map(p=><p key={p.pick}><strong>#{p.pick+1} {p.player.name}</strong><br/>{d.entries[p.owner].team}</p>):<p>No picks yet.</p>}</section></aside></div><div className="board-section"><Board draft={d}/></div></>;
+function Board({ draft }: { draft: Draft }) {
+  const size = draft.entries.length,
+    done = draft.picks.length === size * 5;
+  return (
+    <section className="league-board panel">
+      <div className="scorebar">
+        <h3>Draft board</h3>
+        <span className="muted">{size} teams · 5 rounds</span>
+      </div>
+      <div
+        className="board-scroll"
+        tabIndex={0}
+        aria-label="League draft board, scroll horizontally"
+      >
+        <div
+          className="board-grid"
+          style={{ gridTemplateColumns: `repeat(${size}, minmax(136px, 1fr))` }}
+        >
+          {draft.entries.map((e, i) => (
+            <div className="board-team" key={i}>
+              <strong>{e.team}</strong>
+              <small>{e.manager}</small>
+            </div>
+          ))}
+          {Array.from({ length: 5 }, (_, r) =>
+            draft.entries.map((_, owner) => {
+              const pick = r * size + (r % 2 ? size - 1 - owner : owner),
+                entry = draft.picks[pick];
+              return (
+                <div
+                  className={`board-pick ${pick === draft.picks.length && !done ? 'on-clock' : ''}`}
+                  key={pick}
+                >
+                  <small>
+                    #{pick + 1}
+                    {pick === draft.picks.length && !done ? ' · On clock' : ''}
+                  </small>
+                  <span>{entry?.player.name || '—'}</span>
+                </div>
+              );
+            }),
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+export default function Fantasy({ state, setState, catalog }: GameProps) {
+  const [error, setError] = useState(''),
+    [search, setSearch] = useState(''),
+    [position, setPosition] = useState('all'),
+    [roster, setRoster] = useState(0);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const d = state.draft,
+    setup = state.setup;
+  const handoff = useRef<HTMLButtonElement>(null);
+  const pickCount = d?.picks.length;
+  const ready = d?.ready;
+  useEffect(() => {
+    if (ready) searchRef.current?.focus();
+    else handoff.current?.focus();
+  }, [pickCount, ready]);
+  const reset = () => {
+    setState((s) => ({ ...s, draft: null }));
+    setSearch('');
+    setPosition('all');
+    setRoster(0);
+    setError('');
+  };
+  if (!d)
+    return (
+      <>
+        <Heading title="Fantasy league" copy="Local league · Human managers" />
+        <section className="panel">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const entries = setup.entries
+                .slice(0, setup.size)
+                .map((e) => ({ team: e.team.trim(), manager: e.manager.trim() }));
+              if (!validSetup(setup.name, entries)) {
+                setError('Enter a league name and unique team and manager names.');
+                return;
+              }
+              if (catalog.players.length < setup.size * 5) {
+                setError(
+                  `This league needs ${setup.size * 5} imported draft players; ${catalog.players.length} are available.`,
+                );
+                return;
+              }
+              setState((s) => ({
+                ...s,
+                draft: { name: setup.name.trim(), entries, picks: [], ready: false },
+              }));
+              setError('');
+            }}
+          >
+            <div className="league-fields">
+              <div>
+                <label htmlFor="league-name">League name</label>
+                <input
+                  id="league-name"
+                  maxLength={40}
+                  value={setup.name}
+                  onChange={(e) =>
+                    setState((s) => ({ ...s, setup: { ...s.setup, name: e.target.value } }))
+                  }
+                />
+              </div>
+              <div>
+                <label htmlFor="league-size">Teams</label>
+                <select
+                  id="league-size"
+                  value={setup.size}
+                  onChange={(e) =>
+                    setState((s) => ({ ...s, setup: { ...s.setup, size: +e.target.value } }))
+                  }
+                >
+                  {[4, 5, 6, 7, 8].map((n) => (
+                    <option key={n} value={n}>
+                      {n} teams
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="manager-grid">
+              {setup.entries.slice(0, setup.size).map((entry, i) => (
+                <div className="manager-entry" key={i}>
+                  <span className="eyebrow">PICK {i + 1}</span>
+                  {(['manager', 'team'] as const).map((field) => (
+                    <div key={field}>
+                      <label htmlFor={`${field}-${i}`}>
+                        {field === 'manager' ? 'Manager' : 'Team'}
+                      </label>
+                      <input
+                        id={`${field}-${i}`}
+                        maxLength={32}
+                        value={entry[field]}
+                        onChange={(e) =>
+                          setState((s) => ({
+                            ...s,
+                            setup: {
+                              ...s.setup,
+                              entries: s.setup.entries.map((v, j) =>
+                                j === i ? { ...v, [field]: e.target.value } : v,
+                              ),
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <p>Five players per team. Snake order. One shared device.</p>
+            <p role="alert" className="notice">
+              {error}
+            </p>
+            <button className="primary">Start league draft →</button>
+          </form>
+        </section>
+      </>
+    );
+  const size = d.entries.length,
+    done = d.picks.length === size * 5,
+    current = ownerAt(d.picks.length, size),
+    last = d.picks.at(-1);
+  const rosterPanel = (i: number) => (
+    <>
+      {d.picks
+        .filter((p) => p.owner === i)
+        .map((p) => (
+          <div className="roster-item" key={p.pick}>
+            {p.player.name}
+            <p>
+              {p.player.position} · {p.player.team} · Pick {p.pick + 1}
+            </p>
+          </div>
+        ))}
+      {!d.picks.some((p) => p.owner === i) && <p>No picks yet.</p>}
+    </>
+  );
+  if (done)
+    return (
+      <>
+        <Heading title={d.name} copy="Draft complete" />
+        <Board draft={d} />
+        <div className="section-head">
+          <h2>Team rosters</h2>
+          <button ref={handoff} className="secondary" onClick={reset}>
+            New league
+          </button>
+        </div>
+        <div className="league-rosters">
+          {d.entries.map((e, i) => (
+            <section className="panel" key={i}>
+              <h3>{e.team}</h3>
+              <p>{e.manager}</p>
+              {rosterPanel(i)}
+            </section>
+          ))}
+        </div>
+      </>
+    );
+  if (!d.ready)
+    return (
+      <>
+        <Heading title={d.name} />
+        <section className="panel">
+          <p>
+            {last
+              ? `${d.entries[last.owner].team} picked ${last.player.name}.`
+              : 'League draft ready.'}
+          </p>
+          <h2 className="handoff-title">{d.entries[current].manager}, you’re up.</h2>
+          <p>
+            {d.entries[current].team} · Round {Math.floor(d.picks.length / size) + 1} · Pick{' '}
+            {d.picks.length + 1} / {size * 5}
+          </p>
+          <button
+            ref={handoff}
+            className="primary handoff-button"
+            onClick={() => {
+              setRoster(current);
+              setState((s) => ({ ...s, draft: s.draft ? { ...s.draft, ready: true } : null }));
+            }}
+          >
+            Make pick →
+          </button>
+        </section>
+        <div className="board-section">
+          <Board draft={d} />
+        </div>
+      </>
+    );
+  const available = filterPlayers(catalog.players, d.picks, search, position);
+  return (
+    <>
+      <Heading title={d.name} />
+      <div className="draft-top">
+        <div>
+          <h2>{d.entries[current].team}’s pick</h2>
+          <p>
+            {d.entries[current].manager} · Round {Math.floor(d.picks.length / size) + 1} / 5 · Pick{' '}
+            {d.picks.length + 1} / {size * 5}
+          </p>
+        </div>
+        <span>{size}-team league</span>
+      </div>
+      <div className="draft-layout">
+        <section className="panel">
+          <div className="scorebar">
+            <h3>Players</h3>
+            <span className="muted">{catalog.rankingLabel}</span>
+          </div>
+          <div className="filter-row">
+            <div className="search-field">
+              <label htmlFor="search-player">Search</label>
+              <input
+                ref={searchRef}
+                autoFocus
+                id="search-player"
+                value={search}
+                placeholder="Name or team"
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="position">Position</label>
+              <select id="position" value={position} onChange={(e) => setPosition(e.target.value)}>
+                <option value="all">All</option>
+                {['G', 'F', 'C'].map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {available.length ? (
+            available.map((p) => (
+              <div className="player-row" key={p.id}>
+                <span className="rank">{String(p.rank).padStart(2, '0')}</span>
+                <div>
+                  <div className="player-name">{p.name}</div>
+                  <div className="player-info">
+                    {p.team} ·{' '}
+                    {p.position === 'G' ? 'Guard' : p.position === 'F' ? 'Forward' : 'Center'}
+                  </div>
+                </div>
+                <span className="muted">{p.position}</span>
+                <button
+                  className="primary"
+                  aria-label={`Draft ${p.name}`}
+                  onClick={() => {
+                    setState((s) => {
+                      const draft = s.draft;
+                      if (
+                        !draft?.ready ||
+                        draft.picks.length >= draft.entries.length * 5 ||
+                        draft.picks.some((x) => x.player.id === p.id)
+                      )
+                        return s;
+                      const picks = [
+                        ...draft.picks,
+                        {
+                          player: p,
+                          owner: ownerAt(draft.picks.length, draft.entries.length),
+                          pick: draft.picks.length,
+                        },
+                      ];
+                      return {
+                        ...s,
+                        draft: { ...draft, picks, ready: false },
+                        progress: {
+                          ...s.progress,
+                          drafts:
+                            s.progress.drafts + (picks.length === draft.entries.length * 5 ? 1 : 0),
+                        },
+                      };
+                    });
+                    setSearch('');
+                    setPosition('all');
+                  }}
+                >
+                  Draft +
+                </button>
+              </div>
+            ))
+          ) : (
+            <p role="status">
+              No matches.{' '}
+              {filterPlayers(catalog.players, d.picks, '', 'all').length === 0
+                ? 'No imported draft players remain. Import missing players and reload.'
+                : 'Try another name, team, or position.'}
+            </p>
+          )}
+        </section>
+        <aside>
+          <section className="panel">
+            <label htmlFor="roster-team">Team roster</label>
+            <select id="roster-team" value={roster} onChange={(e) => setRoster(+e.target.value)}>
+              {d.entries.map((e, i) => (
+                <option key={i} value={i}>
+                  {e.team}
+                </option>
+              ))}
+            </select>
+            {rosterPanel(roster)}
+          </section>
+          <section className="panel log">
+            <h3>Recent picks</h3>
+            {d.picks.length ? (
+              d.picks
+                .slice()
+                .reverse()
+                .map((p) => (
+                  <p key={p.pick}>
+                    <strong>
+                      #{p.pick + 1} {p.player.name}
+                    </strong>
+                    <br />
+                    {d.entries[p.owner].team}
+                  </p>
+                ))
+            ) : (
+              <p>No picks yet.</p>
+            )}
+          </section>
+        </aside>
+      </div>
+      <div className="board-section">
+        <Board draft={d} />
+      </div>
+    </>
+  );
 }

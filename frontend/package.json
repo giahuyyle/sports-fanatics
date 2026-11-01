@@ -13,6 +13,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.mjs\" index.html vite.config.ts"
   },
   "dependencies": {
+    "firebase": "^13.1.0",
     "lucide-react": "^1.63.0",
     "mf-react-basketball-logos": "^1.0.0",
     "react": "^19.3.1",

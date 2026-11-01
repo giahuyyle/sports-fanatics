@@ -9,6 +9,8 @@ import type { Catalog, State } from './game';
 import { GuessGame } from './pages/Games';
 const GridGame = lazy(() => import('./pages/GridGame'));
 import Fantasy from './pages/Fantasy';
+import Auth from './pages/Auth';
+import Account from './pages/Account';
 export interface GameProps {
   state: State;
   setState: Dispatch<SetStateAction<State>>;
@@ -89,6 +91,10 @@ export default function App() {
           </details>
         )}
         <Routes>
+          <Route path="/login" element={<Auth key="login" mode="login" />} />
+          <Route path="/signup" element={<Auth key="signup" mode="signup" />} />
+          <Route path="/forgot-password" element={<Auth key="reset" mode="reset" />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/" element={<Landing {...state.progress} />} />
           <Route
             path="/game"

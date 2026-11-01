@@ -16,6 +16,8 @@ class Config(BaseSettings):
     # db_port: int = os.getenv("DB_PORT", None)
     db_name: str = os.getenv("DB_NAME", None)
 
+    firebase_project_id: str | None = os.getenv("FIREBASE_PROJECT_ID")
+
     @property
     def construct_db_url(self):
         if self.db_type == "sqlite":

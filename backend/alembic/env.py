@@ -9,10 +9,13 @@ from app.schema.base import Base
 from app.schema.player import Player
 from app.schema.team import Team
 from app.schema.season import Season
+from app.schema.user import User
+from app.core.config import config as app_config
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+config.set_main_option("sqlalchemy.url", app_config.construct_db_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

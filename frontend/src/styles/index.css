@@ -1388,5 +1388,36 @@ footer {
 .auth-intro { color: var(--muted, #666); line-height: 1.6; }
 .auth-intro a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 
+.header-account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.header-account .profile { margin-left: 0; display: flex; align-items: center; }
+.account-avatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  font-size: 17px;
+  font-weight: 600;
+}
+.account-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.account-avatar:hover, .account-avatar.active { border-color: var(--text); }
 .auth-panel h1 { font-size: var(--h1); line-height: 1.1; letter-spacing: -0.04em; }
 .auth-panel .auth-intro { display: grid; gap: 8px; font-size: 16px; margin-top: 4px; margin-bottom: 12px; }
+@media (max-width: 768px) {
+  .header-account { margin-left: auto; gap: 12px; }
+}
+@media (max-width: 420px) {
+  .header { gap: 12px; padding-inline: 16px; }
+  .header .brand { gap: 8px; font-size: 14px; }
+  .header-account { gap: 8px; }
+  .header-account .profile { font-size: 12px; }
+}

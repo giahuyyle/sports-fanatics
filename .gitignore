@@ -8,3 +8,11 @@ __pycache__/
 
 # database (sqlite)
 *.db
+
+# agents
+.agent/
+.codex/
+
+# firebase secret
+firebase-admin.json
+.config/
